@@ -1,0 +1,199 @@
+import { Palette, Typography, Spacing, PulseClock, i18n } from "../theme/globals.slint";
+import { DownloadItem, DlState }                    from "../models/download-item.slint";
+import { DownloadRow }                              from "../components/rows/download-row.slint";
+import { SkeletonRow }                              from "../components/rows/skeleton-row.slint";
+import { EmptyState }                               from "../components/cards/cards.slint";
+import { ListView }                                  from "std-widgets.slint";
+
+export component ContentLayout inherits VerticalLayout {
+    in property <[DownloadItem]> downloads;
+    in property <string>         selected-id;
+    in property <[string]>       selected-ids;
+    in property <int>            total-downloads;
+    in property <bool>           has-search;
+    in property <string>         active-filter;
+    in property <bool>           is-loading;
+
+    callback row-clicked(string, bool, bool);
+    callback pause-item(string);
+    callback resume-item(string);
+    callback retry-item(string);
+    callback delete-item(string);
+    callback delete-selected;          // Delete key — removes all selected items
+    callback chunks-clicked(string);
+    callback open-folder(string);
+    callback context-menu-requested(string, length, length);
+    callback add-clicked;
+    callback select-prev(bool, bool);
+    callback select-next(bool, bool);
+    callback select-page-up(bool, bool);
+    callback select-page-down(bool, bool);
+    callback toggle-selected;
+
+    spacing: 0;
+
+    Rectangle {
+        height: Spacing.colheader-height;
+        background: Palette.b2;
+        Rectangle { y: parent.height - 1px; height: 1px; background: Palette.bdr; }
+
+        HorizontalLayout {
+            padding-left: 12px;
+            padding-right: 12px;
+            alignment: center;
+
+            Rectangle { width: 22px; }
+
+            Text {
+                color: Palette.t3;
+                font-size: 10px;
+                font-weight: 800;
+                vertical-alignment: center;
+                horizontal-stretch: 1;
+                text: i18n.is-rtl ? "الملف" : "FILE";
+                letter-spacing: 0.08rem;
+                horizontal-alignment: i18n.is-rtl ? right : left;
+            }
+            Text {
+                color: Palette.t3;
+                font-size: 10px;
+                font-weight: 800;
+                vertical-alignment: center;
+                width: 80px;
+                text: i18n.is-rtl ? "الحالة" : "STATUS";
+                letter-spacing: 0.08rem;
+                horizontal-alignment: i18n.is-rtl ? right : left;
+            }
+            Text {
+                color: Palette.t3;
+                font-size: 10px;
+                font-weight: 800;
+                vertical-alignment: center;
+                width: 180px;
+                text: i18n.is-rtl ? "التقدم" : "PROGRESS";
+                letter-spacing: 0.08rem;
+                horizontal-alignment: i18n.is-rtl ? right : left;
+            }
+            Text {
+                color: Palette.t3;
+                font-size: 10px;
+                font-weight: 800;
+                vertical-alignment: center;
+                width: 110px;
+                text: i18n.is-rtl ? "الحجم" : "SIZE";
+                horizontal-alignment: i18n.is-rtl ? left : right;
+                letter-spacing: 0.08rem;
+            }
+            Text {
+                color: Palette.t3;
+                font-size: 10px;
+                font-weight: 800;
+                vertical-alignment: center;
+                width: 80px;
+                text: i18n.is-rtl ? "السرعة" : "SPEED";
+                horizontal-alignment: i18n.is-rtl ? left : right;
+                letter-spacing: 0.08rem;
+            }
+            Text {
+                color: Palette.t3;
+                font-size: 10px;
+                font-weight: 800;
+                vertical-alignment: center;
+                width: 60px;
+                text: i18n.is-rtl ? "الزمن" : "ETA";
+                horizontal-alignment: i18n.is-rtl ? left : right;
+                letter-spacing: 0.08rem;
+            }
+            Text {
+                color: Palette.t3;
+                font-size: 10px;
+                font-weight: 800;
+                vertical-alignment: center;
+                width: 64px;
+                text: i18n.is-rtl ? "الأجزاء" : "CHUNKS";
+                horizontal-alignment: i18n.is-rtl ? left : right;
+                letter-spacing: 0.08rem;
+            }
+        }
+    }
+
+    Rectangle {
+        horizontal-stretch: 1;
+        vertical-stretch: 1;
+        background: Palette.b0;
+        clip: true;
+
+        if (is-loading): FocusScope {
+            ListView {
+                for i in 8: SkeletonRow {
+                    horizontal-stretch: 1;
+                    pulse-tick: PulseClock.tick;
+                }
+            }
+        }
+
+        if (!is-loading) && (downloads.length == 0) && (total-downloads == 0): EmptyState {
+            title: i18n.is-rtl ? "لا يوجد تحميلات بعد" : "No downloads yet";
+            subtitle: i18n.is-rtl ? "اضغط على إضافة جديد للبدء" : "Click ＋ Add in the toolbar to get started";
+            add-clicked => { add-clicked(); }
+        }
+
+        if (!is-loading) && (downloads.length == 0) && (total-downloads > 0) && (has-search): EmptyState {
+            icon: "🔍";
+            title: i18n.is-rtl ? "لم يتم العثور على نتائج" : "No results found";
+            subtitle: i18n.is-rtl ? "حاول تغيير كلمة البحث" : "Try adjusting your search query";
+            add-clicked => { add-clicked(); }
+        }
+
+        if (!is-loading) && (downloads.length == 0) && (total-downloads > 0) && (!has-search) && (active-filter != "all"): EmptyState {
+            icon: "⊘";
+            title: i18n.is-rtl ? "الفئة فارغة" : "No downloads in this category";
+            subtitle: i18n.is-rtl ? "قم بتغيير الفلتر أو إضافة تحميل جديد" : "Change the filter or add new downloads";
+            add-clicked => { add-clicked(); }
+        }
+
+        if (!is-loading) && (downloads.length > 0): FocusScope {
+            key-pressed(event) => {
+                if (event.text == Key.UpArrow) {
+                    select-prev(event.modifiers.shift, event.modifiers.control);
+                    return accept;
+                } else if (event.text == Key.DownArrow) {
+                    select-next(event.modifiers.shift, event.modifiers.control);
+                    return accept;
+                } else if (event.text == Key.PageUp) {
+                    select-page-up(event.modifiers.shift, event.modifiers.control);
+                    return accept;
+                } else if (event.text == Key.PageDown) {
+                    select-page-down(event.modifiers.shift, event.modifiers.control);
+                    return accept;
+                } else if (event.text == Key.Space) {
+                    toggle-selected();
+                    return accept;
+                } else if (event.text == Key.Delete) {
+                    delete-selected();
+                    return accept;
+                }
+                reject
+            }
+
+            ListView {
+                for dl in downloads: DownloadRow {
+                    horizontal-stretch: 1;
+                    item: dl;
+                    selected: dl.selected;
+                    pulse-tick: PulseClock.tick;
+                    row-clicked(id, shift, control) => { row-clicked(id, shift, control); }
+                    pause-clicked       => { pause-item(dl.id);           }
+                    resume-clicked      => { resume-item(dl.id);          }
+                    retry-clicked       => { retry-item(dl.id);           }
+                    delete-clicked      => { delete-item(dl.id);          }
+                    chunks-clicked      => { chunks-clicked(dl.id);       }
+                    open-folder-clicked => { open-folder(dl.id);          }
+                    context-menu-requested(id, mx, my) => {
+                        context-menu-requested(id, mx, my);
+                    }
+                }
+            }
+        }
+    }
+}

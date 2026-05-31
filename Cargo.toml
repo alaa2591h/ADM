@@ -1,0 +1,103 @@
+[workspace]
+resolver = "2"
+
+members = [
+    "crates/adm-types",
+    "crates/adm-storage",
+    "crates/adm-network",
+    "crates/adm-engine",
+    "crates/adm-gateway",
+    "crates/adm-extractor",
+    "crates/adm-cache",
+    "crates/observability",
+    "crates/ipc",
+    "apps/adm-server",
+]
+
+[workspace.package]
+version      = "0.1.0"
+edition      = "2021"
+license      = "MIT"
+authors      = ["Apex Team"]
+repository   = "https://github.com/apex/adm"
+
+[workspace.dependencies]
+tokio              = { version = "1.44", features = ["full"] }
+serde              = { version = "1.0", features = ["derive"] }
+serde_json         = "1.0"
+anyhow             = "1.0"
+thiserror          = "2.0"
+uuid               = { version = "1.11", features = ["v4", "serde"] }
+chrono             = { version = "0.4.44", features = ["serde"] }
+tracing            = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+url                = "2.5"
+parking_lot        = "0.12"
+async-trait        = "0.1"
+bytes              = "1.10"
+futures            = "0.3"
+futures-util       = "0.3"
+tempfile           = "3.27"
+rusqlite           = { version = "0.31", features = ["bundled", "uuid", "chrono"] }
+r2d2               = "0.8"
+r2d2_sqlite        = "0.25"
+axum               = { version = "0.7", features = ["ws", "macros"] }
+tower-http         = { version = "0.5", features = ["fs", "cors", "trace"] }
+reqwest            = { version = "0.12", features = ["json", "stream", "rustls-tls"] }
+metrics            = "0.24"
+metrics-exporter-prometheus = "0.18"
+tokio-util         = { version = "0.7", features = ["full"] }
+slint              = "1.16"
+slint-build        = "1.16"
+tray-icon          = "0.24"
+notify-rust        = "4.11"
+open               = "5.3"
+dirs               = "6.0"
+tray-icon-014      = { package = "tray-icon", version = "0.14" }
+md5                = { package = "md-5", version = "0.10" }
+sha1               = "0.10"
+sha2               = "0.10"
+crc32fast          = "1.5"
+aes-gcm            = "0.10"
+pbkdf2             = { version = "0.12", features = ["password-hash"] }
+aes                = "0.8"
+cipher             = "0.4"
+
+# Core Workspace Crates
+adm-types         = { path = "crates/adm-types" }
+adm-storage       = { path = "crates/adm-storage" }
+adm-network       = { path = "crates/adm-network" }
+adm-engine        = { path = "crates/adm-engine" }
+adm-gateway       = { path = "crates/adm-gateway" }
+extractor         = { path = "crates/adm-extractor" }
+adm-cache         = { path = "crates/adm-cache" }
+adm-observability = { path = "crates/observability" }
+ipc               = { path = "crates/ipc" }
+
+[profile.release]
+opt-level     = 3
+lto           = "fat"
+codegen-units = 1
+strip         = "symbols"
+panic         = "abort"
+
+# ── dist: shipping profile (inherits release, explicit for clarity) ───────────
+[profile.dist]
+inherits      = "release"
+opt-level     = 3
+lto           = "fat"
+codegen-units = 1
+strip         = "symbols"
+panic         = "abort"
+
+# ── dev: local development ────────────────────────────────────────────────────
+[profile.dev]
+opt-level     = 0
+debug         = true
+
+# ── ci: fast CI test builds — no debug info, maximises sccache hits ──────────
+[profile.ci]
+inherits      = "dev"
+opt-level     = 1        # enough for meaningful tests
+debug         = false    # shaves ~30% off Windows test compile times
+incremental   = false    # sccache replaces incremental compilation

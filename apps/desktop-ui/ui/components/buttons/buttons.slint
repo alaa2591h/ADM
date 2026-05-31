@@ -1,0 +1,206 @@
+
+import { Palette, Typography, Spacing } from "../../theme/globals.slint";
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  PRIMARY BUTTON  — filled, accent-coloured CTA
+// ─────────────────────────────────────────────────────────────────────────────
+export component PrimaryButton inherits Rectangle {
+    in property <string> label;
+    in property <string> icon:    "";
+    in property <color>  bg:      Palette.acc;
+    in property <color>  fg:      white;
+    in property <bool>   enabled: true;
+    callback clicked;
+
+    property <bool> hv: false;
+    property <bool> pr: false;   // pressed state
+    property <bool> fc: focus-scope.has-focus;
+
+    height: 34px;
+    border-radius: Spacing.radius-md;
+    background: !enabled ? Palette.b4
+              : fc        ? bg.brighter(0.12)
+              : pr        ? bg.darker(0.12)
+              : hv        ? bg.brighter(0.08)
+              :              bg;
+    border-width: fc ? 2px : 0px;
+    border-color: Palette.acc;
+    opacity: enabled ? 1.0 : 0.45;
+    animate background { duration: 90ms; }
+    drop-shadow-blur: hv ? 10px : 0px;
+    drop-shadow-color: bg.with-alpha(0.4);
+    drop-shadow-offset-y: hv ? 3px : 0px;
+    animate drop-shadow-blur { duration: 120ms; }
+
+    HorizontalLayout {
+        padding-left: Spacing.md;
+        padding-right: Spacing.md;
+        spacing: Spacing.xs;
+        alignment: center;
+
+        if (icon != ""): Text {
+            text: icon;
+            font-size: Typography.md;
+            color: fg;
+            vertical-alignment: center;
+        }
+        Text {
+            text: label;
+            color: fg;
+            font-size: Typography.md;
+            font-weight: Typography.bold;
+            vertical-alignment: center;
+        }
+    }
+
+    TouchArea {
+        enabled: enabled;
+        pointer-event(e) => {
+            if (e.kind == PointerEventKind.down) { pr = true;  hv = true;  }
+            if (e.kind == PointerEventKind.up)   { pr = false; }
+        }
+        moved => { hv = self.has-hover; }
+        clicked => { root.clicked(); }
+        mouse-cursor: pointer;
+    }
+
+    focus-scope := FocusScope {
+        key-pressed(e) => {
+            if (e.text == Key.Return || e.text == " ") { root.clicked(); return accept; }
+            reject
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  GHOST BUTTON  — outlined, secondary action
+// ─────────────────────────────────────────────────────────────────────────────
+export component GhostButton inherits Rectangle {
+    in property <string> label;
+    in property <color>  fg: Palette.t2;
+    callback clicked;
+
+    property <bool> hv: false;
+    property <bool> fc: focus-scope.has-focus;
+
+    height: 34px;
+    border-radius: Spacing.radius-md;
+    border-color: fc ? Palette.acc : hv ? Palette.bdr3 : Palette.bdr2;
+    border-width: fc ? 2px : 1px;
+    background: hv ? Palette.b3 : transparent;
+    animate background { duration: 90ms; }
+
+    Text {
+        text: label;
+        color: fg;
+        font-size: Typography.md;
+        font-weight: Typography.semi;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+    TouchArea {
+        clicked  => { root.clicked(); }
+        mouse-cursor: pointer;
+    }
+
+    focus-scope := FocusScope {
+        key-pressed(e) => {
+            if (e.text == Key.Return || e.text == " ") { root.clicked(); return accept; }
+            reject
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  TOOLBAR BUTTON  — icon + label, compact vertical layout
+// ─────────────────────────────────────────────────────────────────────────────
+export component ToolbarButton inherits Rectangle {
+    in property <string> icon;
+    in property <string> label;
+    in property <color>  icon-color: Palette.t2;
+    callback clicked;
+
+    property <bool> hv: false;
+    property <bool> pr: false;
+
+    width: 56px;
+    height: 52px;
+    border-radius: Spacing.radius-sm;
+    background: pr ? Palette.b4 : hv ? Palette.b3 : transparent;
+    animate background { duration: 80ms; }
+
+    VerticalLayout {
+        alignment: center;
+        spacing: 3px;
+        Text { text: icon;  color: icon-color;   font-size: 16px; horizontal-alignment: center; }
+        Text { text: label; color: Palette.t2;   font-size: Typography.xs; horizontal-alignment: center; }
+    }
+    TouchArea {
+        pointer-event(e) => {
+            if (e.kind == PointerEventKind.down) { pr = true;  }
+            if (e.kind == PointerEventKind.up)   { pr = false; }
+        }
+        clicked => { root.clicked(); }
+        mouse-cursor: pointer;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  ICON BUTTON  — small square icon-only button
+// ─────────────────────────────────────────────────────────────────────────────
+export component IconButton inherits Rectangle {
+    in property <string> icon;
+    in property <color>  icon-color: Palette.t2;
+    in property <length> size: 28px;
+    callback clicked;
+
+    property <bool> hv: false;
+
+    width: size;
+    height: size;
+    border-radius: Spacing.radius-sm;
+    background: hv ? Palette.b3 : transparent;
+    animate background { duration: 80ms; }
+
+    Text {
+        text: icon;
+        color: icon-color;
+        font-size: Typography.lg;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+    TouchArea {
+        clicked  => { root.clicked(); }
+        mouse-cursor: pointer;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  ROW ACTION BUTTON  — tiny hover-revealed action
+// ─────────────────────────────────────────────────────────────────────────────
+export component RowActionButton inherits Rectangle {
+    in property <string> icon;
+    in property <color>  icon-color: Palette.t2;
+    callback clicked;
+
+    property <bool> hv: false;
+
+    width: 22px;
+    height: 22px;
+    border-radius: Spacing.radius-sm;
+    background: hv ? Palette.b5 : transparent;
+    animate background { duration: 70ms; }
+
+    Text {
+        text: icon;
+        color: icon-color;
+        font-size: 12px;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+    TouchArea {
+        z: 10;
+        clicked  => { root.clicked(); }
+        mouse-cursor: pointer;
+    }
+}

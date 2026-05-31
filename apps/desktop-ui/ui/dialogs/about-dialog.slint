@@ -1,0 +1,150 @@
+
+import { Palette, Typography, Spacing }        from "../theme/globals.slint";
+import { DialogPanel, DialogHeader }           from "../components/dialogs/dialog-base.slint";
+import { PrimaryButton }                       from "../components/buttons/buttons.slint";
+
+export component AboutDialog inherits Rectangle {
+    callback close;
+
+    width: 100%; height: 100%;
+    background: Palette.overlay;
+    
+
+    TouchArea { z: 0; clicked => { close(); } }
+
+    DialogPanel {
+        z: 1;
+        x: (parent.width  - self.width)  / 2;
+        y: (parent.height - self.height) / 2;
+        panel-width: 400px;
+        panel-height: 320px;
+
+        VerticalLayout {
+            spacing: 0;
+
+            DialogHeader {
+                title: "About APEX DM";
+                close-clicked => { close(); }
+            }
+
+            VerticalLayout {
+                padding: Spacing.xl;
+                spacing: Spacing.lg;
+                alignment: center;
+                vertical-stretch: 1;
+
+                // Logo
+                HorizontalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 64px; height: 64px;
+                        border-radius: 18px;
+                        background: Palette.acc;
+                        drop-shadow-blur: 20px;
+                        drop-shadow-color: Palette.acc.with-alpha(0.5);
+                        drop-shadow-offset-y: 4px;
+
+                        Text {
+                            text: "⬇";
+                            font-size: 32px;
+                            color: white;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 4px;
+                    Text {
+                        text: "APEX Download Manager";
+                        color: Palette.t1;
+                        font-size: Typography.xl;
+                        font-weight: Typography.bold;
+                        horizontal-alignment: center;
+                    }
+                    Text {
+                        text: "Version 2.0.0-milestone2";
+                        color: Palette.t3;
+                        font-size: Typography.sm;
+                        horizontal-alignment: center;
+                    }
+                    Text {
+                        text: "A fast, modern download manager built with Slint + Rust";
+                        color: Palette.t2;
+                        font-size: Typography.md;
+                        wrap: word-wrap;
+                        horizontal-alignment: center;
+                    }
+                }
+
+                HorizontalLayout {
+                    alignment: center;
+                    spacing: Spacing.sm;
+
+                    Rectangle {
+                        height: 28px;
+                        width: lbl-rust.preferred-width + 16px;
+                        border-radius: 6px;
+                        background: Palette.b4;
+                        lbl-rust := Text {
+                            text: "Rust";
+                            color: #f97316;
+                            font-size: Typography.xs;
+                            font-weight: Typography.bold;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                    Rectangle {
+                        height: 28px;
+                        width: lbl-slint.preferred-width + 16px;
+                        border-radius: 6px;
+                        background: Palette.b4;
+                        lbl-slint := Text {
+                            text: "Slint 1.7";
+                            color: Palette.acc;
+                            font-size: Typography.xs;
+                            font-weight: Typography.bold;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                    Rectangle {
+                        height: 28px;
+                        width: lbl-mit.preferred-width + 16px;
+                        border-radius: 6px;
+                        background: Palette.b4;
+                        lbl-mit := Text {
+                            text: "MIT License";
+                            color: Palette.grn;
+                            font-size: Typography.xs;
+                            font-weight: Typography.bold;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+
+            // Footer close button
+            Rectangle {
+                height: 56px;
+                background: transparent;
+                Rectangle { height: 1px; background: Palette.bdr; }
+
+                HorizontalLayout {
+                    alignment: center;
+                    PrimaryButton {
+                        width: 100px;
+                        label: "Close";
+                        bg: Palette.b4;
+                        fg: Palette.t1;
+                        clicked => { close(); }
+                    }
+                }
+            }
+        }
+    }
+}

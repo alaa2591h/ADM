@@ -1,0 +1,53 @@
+[package]
+name             = "adm-daemon"
+version.workspace = true
+license.workspace = true
+edition.workspace = true
+
+[dependencies]
+# ── async runtime ──────────────────────────────────────────────────────────
+tokio              = { workspace = true }
+# ── serialisation ──────────────────────────────────────────────────────────
+serde              = { workspace = true }
+serde_json         = { workspace = true }
+# ── error handling ─────────────────────────────────────────────────────────
+anyhow             = { workspace = true }
+# ── logging ────────────────────────────────────────────────────────────────
+tracing            = { workspace = true }
+tracing-subscriber = { workspace = true }
+# ── networking/IPC ─────────────────────────────────────────────────────────
+tokio-tungstenite  = { workspace = true }
+# ── web framework ──────────────────────────────────────────────────────────
+axum               = { workspace = true, features = ["ws"] }
+tower              = { workspace = true, features = ["util"] }
+tower-http         = { workspace = true, features = ["cors", "trace"] }
+axum-server        = { version = "0.8.0", features = ["tls-rustls"] }
+# ── rate limiting ──────────────────────────────────────────────────────────
+governor           = { workspace = true }
+# ── utilities ──────────────────────────────────────────────────────────────
+uuid               = { workspace = true }
+futures            = { workspace = true }
+futures-util       = { workspace = true }
+url                = "2"
+fs2                = { workspace = true }
+# ── system info ────────────────────────────────────────────────────────────
+sysinfo            = "0.33"
+# ── telegram bot ───────────────────────────────────────────────────────────
+teloxide           = { version = "0.12", features = ["macros"] }
+# ── workspace crates ───────────────────────────────────────────────────────
+adm-observability  = { workspace = true }
+adm-runtime    = { workspace = true }
+ipc            = { workspace = true }
+jsonrpc        = { workspace = true }
+adm-engine         = { workspace = true }
+adm-storage        = { workspace = true }
+adm-network        = { workspace = true, features = ["torrent"] }
+settings-core  = { workspace = true }
+settings-schema = { workspace = true }
+extractor      = { workspace = true }
+adm-cache          = { workspace = true }
+api-gateway    = { workspace = true }
+utils          = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

@@ -1,0 +1,56 @@
+
+import { Palette, Typography, Spacing }                  from "../theme/globals.slint";
+import { DialogPanel, DialogHeader, DialogFooter }        from "../components/dialogs/dialog-base.slint";
+
+export component ConfirmDialog inherits Rectangle {
+    in property <string> title:          "Confirm";
+    in property <string> message:        "Are you sure?";
+    in property <string> confirm-label:  "OK";
+    in property <color>  confirm-color:  Palette.red;
+    callback close;
+    callback confirmed;
+
+    width: 100%; height: 100%;
+    background: Palette.overlay;
+
+    TouchArea { z: 0; clicked => { close(); } }
+
+    DialogPanel {
+        z: 1;
+        x: (parent.width  - self.width)  / 2;
+        y: (parent.height - self.height) / 2;
+        panel-width: 380px;
+        panel-height: 190px;
+
+        VerticalLayout {
+            spacing: 0;
+
+            DialogHeader {
+                title: title;
+                close-clicked => { close(); }
+            }
+
+            VerticalLayout {
+                padding-left: Spacing.xl;
+                padding-right: Spacing.xl;
+                padding-top: Spacing.lg;
+                vertical-stretch: 1;
+
+                Text {
+                    text: message;
+                    color: Palette.t2;
+                    font-size: Typography.md;
+                    wrap: word-wrap;
+                }
+            }
+
+            DialogFooter {
+                confirm-label: confirm-label;
+                confirm-bg:    confirm-color;
+                confirm-width: 120px;
+                cancel-clicked  => { close(); }
+                confirm-clicked => { confirmed(); close(); }
+            }
+        }
+    }
+}

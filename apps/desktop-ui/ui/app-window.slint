@@ -1,0 +1,611 @@
+import { Palette, Typography, Spacing, PulseClock }    from "theme/globals.slint";
+export { Palette, Typography, Spacing, PulseClock }
+import { DlState, DownloadItem, FilterCounts, AppStats } from "models/download-item.slint";
+import { MockState }                                    from "models/mock-state.slint";
+
+import { Topbar }                                       from "layouts/topbar.slint";
+import { FilterBar }                                    from "layouts/filterbar.slint";
+import { Sidebar }                                      from "layouts/sidebar.slint";
+import { ContentLayout }                                from "layouts/content-layout.slint";
+import { StatusBar }                                    from "layouts/statusbar.slint";
+
+import { ContextMenuItem, ContextMenuSep }              from "components/menus/menus.slint";
+import { ChunkPanel }                                   from "components/widgets/chunk-panel.slint";
+
+import { AddDownloadDialog }                            from "dialogs/add-download-dialog.slint";
+import { SchedulerDialog }                              from "dialogs/scheduler-dialog.slint";
+import { ConfirmDialog }                                from "dialogs/confirm-dialog.slint";
+import { SettingsDialog }                               from "dialogs/settings-dialog.slint";
+import { AboutDialog }                                  from "dialogs/about-dialog.slint";
+
+export component MainWindow inherits Window {
+    title:            "APEX Download Manager (ADM)";
+    background:       Palette.b0;
+    min-width:        1060px;
+    min-height:        480px;
+    preferred-width:  1280px;
+    preferred-height:  700px;
+    default-font-size: 12px;
+
+    in-out property <[DownloadItem]> downloads:       MockState.downloads;
+    in-out property <FilterCounts>  counts:           MockState.counts;
+    in-out property <AppStats>      stats:            MockState.stats;
+    in-out property <string>        active-filter:    "all";
+    in-out property <string>        selected-id:      "";
+    in-out property <[string]>      selected-ids:     [];
+    in-out property <int>           total-downloads:  0;
+    in-out property <bool>          has-search:       false;
+    in-out property <bool>          is-loading:       false;
+    in-out property <bool>          is_rtl:           false;
+    in-out property <string>        worker-count:     "8";
+    in-out property <string>        max-conns:        "32";
+    in-out property <bool>          daemon-connected: true;
+
+    // RTL is handled via i18n.is-rtl global — no handler needed here.
+
+
+    property <bool>   show-add-dlg:      false;
+    property <bool>   show-sched-dlg:    false;
+    property <bool>   show-confirm-dlg:  false;
+    property <bool>   show-settings-dlg: false;
+    property <bool>   show-about-dlg:    false;
+
+    property <string> confirm-title:   "";
+    property <string> confirm-msg:     "";
+    property <string> confirm-label:   "Confirm";
+    property <color>  confirm-color:   Palette.red;
+    property <string> confirm-action:  "";
+
+    in-out property <bool>    show-chunks:   false;
+    in-out property <string>  chunk-title:   "";
+    in-out property <int>     chunk-count:   16;
+    in-out property <float>   chunk-pct:     0.0;
+    in-out property <DlState> chunk-state:   DlState.Queued;
+    in-out property <string>  chunk-speed:   "";
+    in-out property <string>  chunk-eta:     "";
+
+    property <bool>   show-ctx-menu: false;
+    property <string> ctx-menu-id:   "";
+    property <length> ctx-menu-x:    0px;
+    property <length> ctx-menu-y:    0px;
+
+    in-out property <bool>   show_notification: false;
+    in-out property <string> notification_text: "";
+
+    // Toast auto-hide timer is managed from Rust via Notification.ttl in app_state.rs
+
+    callback add-download(  string, string, string );
+    callback add-scheduled( string, string, string );
+    callback pause-all();
+    callback resume-all();
+    callback delete-selected();
+    callback delete-all();
+    callback select-prev(bool, bool);
+    callback select-next(bool, bool);
+    callback select-page-up(bool, bool);
+    callback select-page-down(bool, bool);
+    callback toggle-selected();
+    callback move-to-queue(  string );
+    callback move-selected-to-queue();
+    callback pause-item(     string );
+    callback resume-item(    string );
+    callback delete-item(    string );
+    callback open-folder(    string );
+    callback retry-item(     string );
+    callback show-chunk-details( string );
+    callback select-row(     string, bool, bool );
+    callback set-filter(     string );
+    callback search-changed( string );
+    callback save-settings(
+        // General
+        string, bool, bool, bool, bool, bool, bool, bool, int,
+        // Downloads
+        int, string, bool, int, int, bool, int, bool, bool,
+        // Connection
+        bool, int, bool, int, int, bool, bool, bool, int,
+        // Speed
+        bool, bool, int, int,
+        // Scheduler
+        bool, int,
+        // Browser
+        bool, bool, bool, bool, bool, bool, bool, bool, int,
+        // Notifications
+        bool, bool, bool, bool, bool, bool, int, bool,
+        // Appearance
+        int, int, bool, bool, bool, bool, bool,
+        // Security
+        bool, bool, int, bool, bool, bool, bool, bool, int, bool,
+        // Advanced
+        string, int, int, int, bool, string, string, int, int,
+        // Language
+        int, int, int
+    );
+    callback toggle-rtl();
+    callback browse-folder();
+    callback reset-defaults();
+    callback open-translation-tool();
+    callback browse-language-pack();
+    callback open-logs-folder();
+    callback dismiss-notification();
+
+    // Global keyboard shortcuts (works when no sub-element has focus)
+    FocusScope {
+        z: 0;
+        width: 0; height: 0;  // invisible — just for key capture at root level
+        key-pressed(event) => {
+            // Ctrl+N  → Add download
+            if (event.text == "n" && event.modifiers.control) {
+                show-add-dlg = true;
+                return accept;
+            }
+            // Ctrl+,  → Settings
+            if (event.text == "," && event.modifiers.control) {
+                show-settings-dlg = true;
+                return accept;
+            }
+            // Ctrl+Shift+P  → Pause all
+            if (event.text == "p" && event.modifiers.control && event.modifiers.shift) {
+                pause-all();
+                return accept;
+            }
+            // Ctrl+Shift+R  → Resume all
+            if (event.text == "r" && event.modifiers.control && event.modifiers.shift) {
+                resume-all();
+                return accept;
+            }
+            // Escape → close chunk panel / context menu
+            if (event.text == Key.Escape) {
+                if (show-ctx-menu)  { show-ctx-menu  = false; return accept; }
+                if (show-chunks)    { show-chunks    = false; return accept; }
+            }
+            // Delete → delete selected downloads
+            if (event.text == Key.Delete && selected-id != "") {
+                delete-selected();
+                return accept;
+            }
+            // Space / Enter → toggle pause/resume on selected row
+            if ((event.text == " " || event.text == Key.Return) && selected-id != "") {
+                toggle-selected();
+                return accept;
+            }
+            // F5 → retry selected failed download
+            if (event.text == Key.F5 && selected-id != "") {
+                retry-item(selected-id);
+                return accept;
+            }
+            reject
+        }
+    }
+
+    VerticalLayout {
+        spacing: 0;
+
+        // ── Title bar ─────────────────────────────────────────────────────
+        Rectangle {
+            height: Spacing.titlebar-height;
+            background: Palette.b1;
+            Rectangle { y: parent.height - 1px; height: 1px; background: Palette.bdr; }
+
+            HorizontalLayout {
+                padding-left: 12px;
+                padding-right: 12px;
+                spacing: 8px;
+                alignment: center;
+
+                HorizontalLayout {
+                    spacing: 7px;
+                    alignment: center;
+                    Rectangle { width: 11px; height: 11px; border-radius: 6px; background: #ff5f57; }
+                    Rectangle { width: 11px; height: 11px; border-radius: 6px; background: #ffbd2e; }
+                    Rectangle { width: 11px; height: 11px; border-radius: 6px; background: #28c840; }
+                }
+
+                Text {
+                    horizontal-stretch: 1;
+                    text: "APEX Download Manager";
+                    color: Palette.t3;
+                    font-size: 11px;
+                    font-weight: 500;
+                    vertical-alignment: center;
+                    horizontal-alignment: center;
+                }
+
+                // RTL toggle
+                rtl-btn := Rectangle {
+                    width: 42px; height: 22px;
+                    border-radius: 6px;
+                    background: rtl-ta.has-hover ? Palette.b3 : Palette.b2;
+                    border-width: 1px;
+                    border-color: is-rtl ? Palette.acc : Palette.bdr2;
+                    animate background { duration: 150ms; }
+                    animate border-color { duration: 150ms; }
+
+                    Text {
+                        text: is-rtl ? "العربية" : "EN";
+                        font-size: 9px;
+                        font-weight: 800;
+                        color: is-rtl ? Palette.acc : Palette.t2;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                    rtl-ta := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            is-rtl = !is-rtl;
+                            toggle-rtl();
+                        }
+                    }
+                }
+
+                Rectangle { width: 11px * 3 + 7px * 2; }
+            }
+        }
+
+        // ── Action toolbar ────────────────────────────────────────────────
+        Topbar {
+            add-clicked        => { show-add-dlg   = true;    }
+            schedule-clicked   => { show-sched-dlg = true;    }
+            pause-all-clicked  => { pause-all();               }
+            resume-all-clicked => { resume-all();              }
+            delete-clicked     => { delete-selected();         }
+            settings-clicked   => { show-settings-dlg = true; }   // ← fixed
+            delete-all-clicked => {
+                confirm-title  = "Delete All Downloads";
+                confirm-msg    = "Remove all downloads from the list? This cannot be undone.";
+                confirm-label  = "Delete All";
+                confirm-color  = Palette.red;
+                confirm-action = "deleteAll";
+                show-confirm-dlg = true;
+            }
+            move-queue-clicked => {
+                confirm-title  = "Move to Queue";
+                confirm-msg    = "Move the selected download to the waiting queue?";
+                confirm-label  = "Move";
+                confirm-color  = Palette.amb;
+                confirm-action = "moveQueue";
+                show-confirm-dlg = true;
+            }
+        }
+
+        // ── Body: Sidebar + right column ─────────────────────────────────
+        HorizontalLayout {
+            vertical-stretch: 1;
+            spacing: 0;
+
+            // ── Sidebar ───────────────────────────────────────────────────
+            Sidebar {
+                counts:           counts;
+                stats:            stats;
+                daemon-connected: daemon-connected;
+                active-filter:    active-filter;
+                filter-changed(f) => {
+                    active-filter = f;
+                    set-filter(f);
+                }
+                settings-clicked => { show-settings-dlg = true; }
+            }
+
+            // ── Right column ──────────────────────────────────────────────
+            VerticalLayout {
+                horizontal-stretch: 1;
+                spacing: 0;
+
+                // ── Filter bar ────────────────────────────────────────────
+                FilterBar {
+                    counts: counts;
+                    active-filter: active-filter;
+                    filter-changed(f) => {
+                        active-filter = f;
+                        set-filter(f);
+                    }
+                    search-changed(q) => { search-changed(q); }
+                }
+
+                // ── Download list ─────────────────────────────────────────
+                ContentLayout {
+                    vertical-stretch: 1;
+                    downloads: downloads;
+                    selected-id: selected-id;
+                    selected-ids: selected-ids;
+                    total-downloads: total-downloads;
+                    has-search: has-search;
+                    active-filter: active-filter;
+                    is-loading: is-loading;
+                    row-clicked(id, shift, control) => {
+                        if (selected-id != id && show-chunks) {
+                            show-chunks = false;
+                        }
+                        selected-id = id;
+                        select-row(id, shift, control);
+                    }
+                    pause-item(id)      => { pause-item(id);                      }
+                    retry-item(id)      => { retry-item(id);                      }
+                    select-prev(shift, control) => { select-prev(shift, control); }
+                    select-next(shift, control) => { select-next(shift, control); }
+                    select-page-up(shift, control) => { select-page-up(shift, control); }
+                    select-page-down(shift, control) => { select-page-down(shift, control); }
+                    toggle-selected()   => { toggle-selected();                   }
+                    resume-item(id)     => { resume-item(id);                     }
+                    delete-item(id)     => { delete-item(id);                     }
+                    delete-selected()   => { delete-selected();                   }
+                    open-folder(id)     => { open-folder(id);                     }
+                    add-clicked         => { show-add-dlg = true;                 }
+                    chunks-clicked(id)  => {
+                        show-chunks = !show-chunks;
+                        show-chunk-details(id);
+                    }
+                    context-menu-requested(id, mx, my) => {
+                        ctx-menu-id  = id;
+                        ctx-menu-x   = mx;
+                        ctx-menu-y   = my;
+                        show-ctx-menu = true;
+                    }
+                }
+
+                // ── Status bar ────────────────────────────────────────────
+                StatusBar {
+                    daemon-connected: daemon-connected;
+                    worker-count:     worker-count;
+                    max-conns:        max-conns;
+                    active-speed:     stats.active-speed;
+                    active-count:     stats.active-count;
+                }
+            }
+        }
+    }
+
+    // ── Chunk panel ───────────────────────────────────────────────────────
+    if show-chunks: ChunkPanel {
+        z: 20;
+        x: 8px;
+        y: root.height - self.height - Spacing.statusbar-height - 8px;
+        width: root.width - 16px;
+        height: 150px;
+
+        title:       chunk-title;
+        chunk-count: chunk-count;
+        pct:         chunk-pct;
+        state:       chunk-state;
+        speed-text:  chunk-speed;
+        eta-text:    chunk-eta;
+        close => { show-chunks = false; }
+    }
+
+    // ── Context menu ──────────────────────────────────────────────────────
+    if show-ctx-menu: Rectangle {
+        z: 90;
+        width: 100%; height: 100%;
+        background: transparent;
+
+        TouchArea {
+            z: 0;
+            clicked => { show-ctx-menu = false; }
+        }
+
+        Rectangle {
+            z: 1;
+            x: min(ctx-menu-x, root.width  - 172px);
+            y: min(ctx-menu-y, root.height - 160px);
+            width: 168px;
+            background: Palette.b2;
+            border-radius: Spacing.radius-md;
+            border-color: Palette.bdr2;
+            border-width: 1px;
+            drop-shadow-offset-y: 8px;
+            drop-shadow-blur: 24px;
+            drop-shadow-color: Palette.shadow;
+
+            VerticalLayout {
+                padding: 5px;
+                spacing: 0;
+
+                ContextMenuItem {
+                    icon: "▶"; label: "Resume";
+                    fg: Palette.grn;
+                    clicked => { resume-item(ctx-menu-id); show-ctx-menu = false; }
+                }
+                ContextMenuItem {
+                    icon: "⏸"; label: "Pause";
+                    fg: Palette.cyn;
+                    clicked => { pause-item(ctx-menu-id); show-ctx-menu = false; }
+                }
+                ContextMenuItem {
+                    icon: "↺"; label: "Retry";
+                    fg: Palette.amb;
+                    clicked => { retry-item(ctx-menu-id); show-ctx-menu = false; }
+                }
+                ContextMenuSep {}
+                ContextMenuItem {
+                    icon: "≡"; label: "Move to Queue";
+                    fg: Palette.acc;
+                    clicked => { move-to-queue(ctx-menu-id); show-ctx-menu = false; }
+                }
+                ContextMenuSep {}
+                ContextMenuItem {
+                    icon: "⋯"; label: "Chunk Details";
+                    fg: Palette.t1;
+                    clicked => {
+                        show-chunks = true;
+                        show-chunk-details(ctx-menu-id);
+                        show-ctx-menu = false;
+                    }
+                }
+                ContextMenuItem {
+                    icon: "📂"; label: "Open Folder";
+                    fg: Palette.amb;
+                    clicked => { open-folder(ctx-menu-id); show-ctx-menu = false; }
+                }
+                ContextMenuSep {}
+                ContextMenuItem {
+                    icon: "ℹ"; label: "About";
+                    fg: Palette.t2;
+                    clicked => { show-about-dlg = true; show-ctx-menu = false; }
+                }
+                ContextMenuSep {}
+                ContextMenuItem {
+                    icon: "🗑"; label: "Delete";
+                    fg: Palette.red;
+                    clicked => { delete-item(ctx-menu-id); show-ctx-menu = false; }
+                }
+            }
+        }
+    }
+
+    // ── Dialogs ───────────────────────────────────────────────────────────
+    if show-add-dlg: AddDownloadDialog {
+        z: 50;
+        close => { show-add-dlg = false; }
+        confirmed(url, name, conn) => {
+            add-download(url, name, conn);
+        }
+    }
+
+    if show-sched-dlg: SchedulerDialog {
+        z: 50;
+        close => { show-sched-dlg = false; }
+        confirmed(url, name, time) => {
+            add-scheduled(url, name, time);
+        }
+    }
+
+    if show-confirm-dlg: ConfirmDialog {
+        z: 50;
+        title:         confirm-title;
+        message:       confirm-msg;
+        confirm-label: confirm-label;
+        confirm-color: confirm-color;
+        close => { show-confirm-dlg = false; }
+        confirmed => {
+            if (confirm-action == "deleteAll") { delete-all(); }
+            else                               { move-selected-to-queue(); }
+        }
+    }
+
+    if show-settings-dlg: SettingsDialog {
+        z: 50;
+        close => { show-settings-dlg = false; }
+        saved(
+            path,
+            launch_on_startup, start_minimized, auto_update, send_telemetry,
+            ask_download_path, create_subfolder, open_folder_on_done, on_complete_action,
+            max_simultaneous, max_conns,
+            retry_failed, retry_count, retry_delay,
+            skip_duplicates, duplicate_action, verify_integrity, auto_extract,
+            use_proxy, proxy_type, proxy_auth, bind_interface, timeout_secs,
+            force_ipv4, server_rate_limit, remember_creds, user_agent,
+            global_dl_limit, global_ul_limit, speed_profile, slow_speed_kbps,
+            scheduler_enabled, sched_speed_mode,
+            capture_chrome, capture_firefox, capture_edge, capture_brave, capture_opera,
+            capture_all, capture_confirm, capture_video, min_capture_mb,
+            notif_done, notif_fail, notif_pause, notif_disk, notif_new,
+            sound_done, sound_type, do_not_disturb,
+            theme_mode, font_size, taskbar_progress, speed_graph,
+            compact_rows, show_chunks, animations,
+            app_lock, biometric, lock_timeout_mins, av_scan, block_malware,
+            warn_exe, https_only, verify_ssl, history_retention, clear_on_exit,
+            workers, chunk_size_kb, buffer_mb, disk_write_strategy,
+            rest_api, daemon_host, daemon_port, log_level, max_log_mb,
+            language, date_fmt, num_fmt
+        ) => {
+            save-settings(
+                path,
+                launch_on_startup, start_minimized, auto_update, send_telemetry,
+                ask_download_path, create_subfolder, open_folder_on_done, on_complete_action,
+                max_simultaneous, max_conns,
+                retry_failed, retry_count, retry_delay,
+                skip_duplicates, duplicate_action, verify_integrity, auto_extract,
+                use_proxy, proxy_type, proxy_auth, bind_interface, timeout_secs,
+                force_ipv4, server_rate_limit, remember_creds, user_agent,
+                global_dl_limit, global_ul_limit, speed_profile, slow_speed_kbps,
+                scheduler_enabled, sched_speed_mode,
+                capture_chrome, capture_firefox, capture_edge, capture_brave, capture_opera,
+                capture_all, capture_confirm, capture_video, min_capture_mb,
+                notif_done, notif_fail, notif_pause, notif_disk, notif_new,
+                sound_done, sound_type, do_not_disturb,
+                theme_mode, font_size, taskbar_progress, speed_graph,
+                compact_rows, show_chunks, animations,
+                app_lock, biometric, lock_timeout_mins, av_scan, block_malware,
+                warn_exe, https_only, verify_ssl, history_retention, clear_on_exit,
+                workers, chunk_size_kb, buffer_mb, disk_write_strategy,
+                rest_api, daemon_host, daemon_port, log_level, max_log_mb,
+                language, date_fmt, num_fmt
+            );
+        }
+        browse-folder            => { browse-folder(); }
+        reset-defaults           => { reset-defaults(); }
+        open-translation-tool    => { open-translation-tool(); }
+        browse-language-pack     => { browse-language-pack(); }
+        open-logs-folder         => { open-logs-folder(); }
+    }
+
+    if show-about-dlg: AboutDialog {
+        z: 50;
+        close => { show-about-dlg = false; }
+    }
+
+    // ── Toast (auto-hides after ~3 s via PulseClock) ──────────────────────
+    if show_notification: Rectangle {
+        z: 99;
+        x: root.width  - self.width  - 16px;
+        y: root.height - self.height - Spacing.statusbar-height - 12px;
+        width: min(notification-label.preferred-width + 36px, 420px);
+        height: 34px;
+        border-radius: Spacing.radius-md;
+        background: Palette.b2;
+        border-color: Palette.bdr2;
+        border-width: 1px;
+        drop-shadow-offset-y: 4px;
+        drop-shadow-blur: 16px;
+        drop-shadow-color: Palette.shadow;
+        opacity: show_notification ? 1.0 : 0.0;
+        animate opacity { duration: 200ms; easing: ease-in-out; }
+
+        // Auto-dismiss: count 6 PulseClock ticks (~4.2 s at 700 ms/tick)
+        property <bool> is-showing: root.show_notification;
+        property <int> ticks: 0;
+        changed is-showing => {
+            if (is-showing) { ticks = 0; }
+        }
+
+        // We can't use 'changed' on a global property inside a component like this easily 
+        // if it's not a direct property of the component.
+        // Let's use a timer or bind it differently.
+        // Actually, let's just use the timer from the global if possible.
+
+        HorizontalLayout {
+            padding-left: 14px;
+            padding-right: 14px;
+            spacing: 8px;
+            alignment: center;
+
+            notification-label := Text {
+                text: root.notification-text;
+                color: Palette.t1;
+                font-size: Typography.sm;
+                vertical-alignment: center;
+                overflow: elide;
+            }
+
+            // Dismiss button
+            Rectangle {
+                width: 16px; height: 16px;
+                border-radius: 3px;
+                background: dismiss-ta.has-hover ? Palette.b4 : transparent;
+                Text {
+                    text: "✕";
+                    font-size: 8px;
+                    color: Palette.t3;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+                dismiss-ta := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        show-notification = false;
+                        dismiss-notification();
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,75 @@
+# cargo-deny configuration for ADM workspace
+# Run: cargo deny check
+# Docs: https://embarkstudios.github.io/cargo-deny/
+
+[graph]
+targets = [
+    { triple = "x86_64-pc-windows-msvc" },
+]
+
+# ── Advisories ────────────────────────────────────────────────────────────────
+[advisories]
+version    = 2
+db-urls    = ["https://github.com/rustsec/advisory-db"]
+unmaintained  = "transitive"
+unsound       = "all"
+yanked        = "deny"
+ignore        = []
+
+# ── Licenses ──────────────────────────────────────────────────────────────────
+[licenses]
+version            = 2
+confidence-threshold = 0.8
+allow              = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-DFS-2016",
+    "Unicode-3.0",
+    "OpenSSL",
+    "Zlib",
+    "CC0-1.0",
+    "MPL-2.0",
+    "BSL-1.0",
+    "BUSL-1.1",
+]
+
+# Known exceptions for crates with non-standard SPDX identifiers
+[[licenses.exceptions]]
+allow   = ["LicenseRef-ring"]
+name    = "ring"
+version = "*"
+
+[[licenses.exceptions]]
+allow   = ["LicenseRef-webpki"]
+name    = "webpki"
+version = "*"
+
+# ── Bans ──────────────────────────────────────────────────────────────────────
+[bans]
+multiple-versions = "warn"
+wildcards         = "allow"
+deny              = [
+    # ring 0.16 is unmaintained — must use 0.17+
+    { name = "ring", version = "< 0.17" },
+    # rustls < 0.23 has known vulnerabilities (infinite loop)
+    { name = "rustls", version = "< 0.23" },
+    # old reqwest with hickory-dns CPU exhaustion bug
+    { name = "reqwest", version = "< 0.12" },
+    # bincode v1 is unmaintained
+    { name = "bincode", version = "< 2" },
+]
+skip              = [
+    { name = "base64", version = "*" },
+]
+skip-tree         = []
+
+# ── Sources ───────────────────────────────────────────────────────────────────
+[sources]
+unknown-registry = "deny"
+unknown-git      = "deny"
+allow-registry   = ["https://github.com/rust-lang/crates.io-index"]
+allow-git        = []

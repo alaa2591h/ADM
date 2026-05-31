@@ -1,0 +1,234 @@
+
+import { Palette, Typography, Spacing, PulseClock, i18n } from "../theme/globals.slint";
+import { FilterCounts, AppStats }                   from "../models/download-item.slint";
+import { SidebarItem }                              from "../components/menus/menus.slint";
+import { SectionHeader }                            from "../components/cards/cards.slint";
+import { StatCard }                                 from "../components/cards/cards.slint";
+
+export component Sidebar inherits Rectangle {
+    in property <FilterCounts> counts;
+    in property <AppStats>     stats;
+    in property <bool>         daemon-connected;
+    in-out property <string>   active-filter: "all";
+    callback filter-changed(string);
+    callback settings-clicked;
+
+    width: Spacing.sidebar-width;
+    background: Palette.b1;
+
+    // Right border (Left in RTL)
+    Rectangle {
+        x: i18n.is-rtl ? 0px : parent.width - 1px;
+        width: 1px;
+        height: parent.height;
+        background: Palette.bdr;
+    }
+
+    VerticalLayout {
+        spacing: 0;
+
+        // ── Brand area ────────────────────────────────────────────────────
+        Rectangle {
+            height: 100px; // Slightly taller for better breathing room
+            background: Palette.b1;
+            Rectangle { y: parent.height - 1px; height: 1px; background: Palette.bdr; }
+
+            HorizontalLayout {
+                padding-left: Spacing.lg;
+                padding-right: Spacing.lg;
+                spacing: Spacing.md;
+                alignment: center;
+
+                Rectangle {
+                    width: 48px;
+                    height: 48px;
+                    border-radius: 14px;
+                    background: @linear-gradient(135deg, Palette.acc, Palette.acc-dim);
+                    drop-shadow-blur: 20px;
+                    drop-shadow-color: Palette.acc-glow;
+                    drop-shadow-offset-y: 6px;
+
+                    Text {
+                        text: "⬇";
+                        font-size: 24px;
+                        color: white;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+
+                VerticalLayout {
+                    horizontal-stretch: 1;
+                    alignment: center;
+                    spacing: 2px;
+                    Text {
+                        text: "APEX DM";
+                        color: Palette.t1;
+                        font-size: 18px;
+                        font-weight: 900;
+                        letter-spacing: 1px;
+                    }
+                    Text {
+                        text: i18n.is-rtl ? "مساحة تحميل ذكية" : "Smart download workspace";
+                        color: Palette.t3;
+                        font-size: 10px;
+                        font-weight: 600;
+                    }
+                }
+            }
+        }
+
+        Rectangle { height: Spacing.sm; }
+        SectionHeader { label: i18n.is-rtl ? "الفلاتر" : "FILTERS"; }
+
+        SidebarItem {
+            icon: "📥"; label: i18n.t("all");
+            count: counts.all;  accent: Palette.acc;
+            active: active-filter == "all";
+            clicked => { active-filter = "all";       filter-changed("all"); }
+        }
+        SidebarItem {
+            icon: "⬇"; label: i18n.t("downloading");
+            count: counts.running; accent: Palette.cyn;
+            active: active-filter == "running";
+            clicked => { active-filter = "running";   filter-changed("running"); }
+        }
+        SidebarItem {
+            icon: "✅"; label: i18n.t("completed");
+            count: counts.completed; accent: Palette.grn;
+            active: active-filter == "completed";
+            clicked => { active-filter = "completed"; filter-changed("completed"); }
+        }
+        SidebarItem {
+            icon: "🕒"; label: i18n.is-rtl ? "المجدولة" : "Scheduled";
+            count: counts.scheduled; accent: Palette.sched;
+            active: active-filter == "scheduled";
+            clicked => { active-filter = "scheduled"; filter-changed("scheduled"); }
+        }
+        SidebarItem {
+            icon: "🗑"; label: i18n.is-rtl ? "المحذوفة" : "Deleted";
+            count: counts.deleted; accent: Palette.red;
+            active: active-filter == "deleted";
+            clicked => { active-filter = "deleted";   filter-changed("deleted"); }
+        }
+
+        // ── Status section ────────────────────────────────────────────────
+        Rectangle { height: Spacing.sm; }
+        Rectangle { height: 1px; background: Palette.bdr; }
+        Rectangle { height: Spacing.sm; }
+        SectionHeader { label: i18n.is-rtl ? "الحالة" : "STATUS"; }
+
+        SidebarItem {
+            icon: "⏸"; label: i18n.t("paused");
+            count: counts.paused; accent: Palette.pur;
+            active: active-filter == "paused";
+            clicked => { active-filter = "paused";    filter-changed("paused"); }
+        }
+        SidebarItem {
+            icon: "⏳"; label: i18n.is-rtl ? "في الانتظار" : "Queued";
+            count: counts.queued; accent: Palette.amb;
+            active: active-filter == "queued";
+            clicked => { active-filter = "queued";    filter-changed("queued"); }
+        }
+        SidebarItem {
+            icon: "❌"; label: i18n.t("error");
+            count: counts.failed; accent: Palette.red;
+            active: active-filter == "failed";
+            clicked => { active-filter = "failed";    filter-changed("failed"); }
+        }
+
+        // ── Stats cards ───────────────────────────────────────────────────
+        Rectangle { height: Spacing.sm; }
+        Rectangle { height: 1px; background: Palette.bdr; }
+        Rectangle { height: Spacing.md; }
+
+        HorizontalLayout {
+            padding-left: Spacing.md;
+            padding-right: Spacing.md;
+            spacing: Spacing.xs;
+
+            StatCard {
+                horizontal-stretch: 1;
+                icon: "⬇";
+                value: stats.total-downloaded;
+                label: i18n.is-rtl ? "محمل" : "Downloaded";
+                accent: Palette.cyn;
+            }
+            StatCard {
+                horizontal-stretch: 1;
+                icon: "⚡";
+                value: stats.active-speed;
+                label: i18n.is-rtl ? "سرعة" : "Speed";
+                accent: Palette.grn;
+            }
+        }
+
+        // Spacer pushes footer to bottom
+        Rectangle { vertical-stretch: 1; }
+
+        // ── Footer: connection status ─────────────────────────────────────
+        Rectangle {
+            height: 64px;
+            background: Palette.b0;
+            // Top border
+            Rectangle { height: 1px; background: Palette.bdr; }
+
+            HorizontalLayout {
+                padding-left: Spacing.lg;
+                padding-right: Spacing.md;
+                spacing: Spacing.sm;
+                alignment: center;
+
+                // Animated connection dot
+                Rectangle {
+                    width: 10px; height: 10px;
+                    border-radius: 5px;
+                    background: daemon-connected ? Palette.grn : Palette.red;
+                    opacity: daemon-connected ? (PulseClock.tick ? 1.0 : 0.4) : 1.0;
+                    animate opacity { duration: 700ms; easing: ease-in-out; }
+                    drop-shadow-blur: 8px;
+                    drop-shadow-color: self.background.with-alpha(0.6);
+                }
+
+                VerticalLayout {
+                    horizontal-stretch: 1;
+                    alignment: center;
+                    spacing: 2px;
+                    Text {
+                        text: daemon-connected ? (i18n.is-rtl ? "متصل" : "Connected") : (i18n.is-rtl ? "غير متصل" : "Disconnected");
+                        color: daemon-connected ? Palette.grn : Palette.red;
+                        font-size: Typography.sm;
+                        font-weight: 800;
+                    }
+                    Text {
+                        text: "localhost:7878";
+                        color: Palette.t3;
+                        font-size: 10px;
+                        font-weight: 600;
+                    }
+                }
+
+                // Settings cog
+                settings-r := Rectangle {
+                    width: 34px; height: 34px;
+                    border-radius: 10px;
+                    background: settings-ta.has-hover ? Palette.b3 : transparent;
+                    animate background { duration: 150ms; }
+
+                    Text {
+                        text: "⚙";
+                        font-size: 18px;
+                        color: settings-ta.has-hover ? Palette.t1 : Palette.t2;
+                        animate color { duration: 150ms; }
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                    settings-ta := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => { settings-clicked(); }
+                    }
+                }
+            }
+        }
+    }
+}

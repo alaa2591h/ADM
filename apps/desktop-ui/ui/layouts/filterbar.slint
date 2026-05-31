@@ -1,0 +1,157 @@
+import { Palette, Typography, Spacing } from "../theme/globals.slint";
+import { FilterCounts }                 from "../models/download-item.slint";
+import { LineEdit }                     from "std-widgets.slint";
+
+component FTab inherits Rectangle {
+    in property <string> label;
+    in property <int>    count;
+    in property <bool>   active;
+    in property <color>  badge-fg: Palette.t2;
+    in property <color>  badge-bg: Palette.b4;
+    callback clicked;
+
+    property <bool> hv: false;
+
+    height: Spacing.filterbar-height;
+    border-radius: Spacing.radius-sm;
+    background: (active || hv) ? Palette.b3 : transparent;
+    animate background { duration: 100ms; }
+
+    if active: Rectangle {
+        x: 4px;
+        y: parent.height - 2px;
+        width: parent.width - 8px;
+        height: 2px;
+        border-radius: 1px;
+        background: Palette.acc;
+    }
+
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 4px;
+        alignment: center;
+
+        Text {
+            text: label;
+            color: active ? Palette.t1 : Palette.t2;
+            font-size: 10px;
+            vertical-alignment: center;
+            animate color { duration: 100ms; }
+        }
+
+        if (count > 0 || active): Rectangle {
+            height: 14px;
+            width: Math.max(cnt-t.preferred-width + 8px, 18px);
+            border-radius: 2px;
+            background: badge-bg;
+
+            cnt-t := Text {
+                text: count;
+                color: badge-fg;
+                font-size: 9px;
+                font-weight: 700;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+        }
+    }
+
+    TouchArea {
+        clicked => { root.clicked(); }
+        mouse-cursor: pointer;
+    }
+}
+
+export component FilterBar inherits Rectangle {
+    in property <FilterCounts> counts;
+    in-out property <string>   active-filter: "all";
+    callback filter-changed(string);
+    callback search-changed(string);
+
+    height: Spacing.filterbar-height;
+    background: Palette.b1;
+    Rectangle { y: parent.height - 1px; height: 1px; background: Palette.bdr; }
+
+    HorizontalLayout {
+        padding-left: 6px;
+        padding-right: 8px;
+        spacing: 1px;
+        alignment: center;
+
+        FTab {
+            label: "All"; count: counts.all;
+            badge-fg: Palette.t2; badge-bg: Palette.b4;
+            active: active-filter == "all";
+            clicked => { active-filter = "all"; filter-changed("all"); }
+        }
+        FTab {
+            label: "Downloading"; count: counts.running;
+            badge-fg: Palette.cyn; badge-bg: Palette.cyn.with-alpha(0.15);
+            active: active-filter == "running";
+            clicked => { active-filter = "running"; filter-changed("running"); }
+        }
+        FTab {
+            label: "Complete"; count: counts.completed;
+            badge-fg: Palette.grn; badge-bg: Palette.grn.with-alpha(0.15);
+            active: active-filter == "completed";
+            clicked => { active-filter = "completed"; filter-changed("completed"); }
+        }
+        FTab {
+            label: "Queued"; count: counts.queued;
+            badge-fg: Palette.amb; badge-bg: Palette.amb.with-alpha(0.15);
+            active: active-filter == "queued";
+            clicked => { active-filter = "queued"; filter-changed("queued"); }
+        }
+        FTab {
+            label: "Scheduled"; count: counts.scheduled;
+            badge-fg: Palette.sched; badge-bg: Palette.sched.with-alpha(0.15);
+            active: active-filter == "scheduled";
+            clicked => { active-filter = "scheduled"; filter-changed("scheduled"); }
+        }
+        FTab {
+            label: "Paused"; count: counts.paused;
+            badge-fg: Palette.pur; badge-bg: Palette.pur.with-alpha(0.15);
+            active: active-filter == "paused";
+            clicked => { active-filter = "paused"; filter-changed("paused"); }
+        }
+        FTab {
+            label: "Errors"; count: counts.failed;
+            badge-fg: Palette.red; badge-bg: Palette.red.with-alpha(0.15);
+            active: active-filter == "failed";
+            clicked => { active-filter = "failed"; filter-changed("failed"); }
+        }
+
+        Rectangle { horizontal-stretch: 1; }
+
+        Rectangle {
+            width: 160px;
+            height: 20px;
+            border-radius: 10px;
+            background: Palette.b3;
+            border-color: Palette.bdr2;
+            border-width: 1px;
+
+            HorizontalLayout {
+                padding-left: 8px;
+                padding-right: 6px;
+                spacing: 4px;
+                alignment: center;
+
+                Text {
+                    text: "🔍";
+                    font-size: 9px;
+                    color: Palette.t3;
+                    vertical-alignment: center;
+                }
+                LineEdit {
+                    horizontal-stretch: 1;
+                    height: 18px;
+                    placeholder-text: "Search…";
+                    font-size: 10px;
+                    edited(q) => { search-changed(q); }
+                }
+            }
+        }
+    }
+}

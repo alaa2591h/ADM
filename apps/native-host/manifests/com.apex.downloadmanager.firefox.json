@@ -1,0 +1,9 @@
+{
+  "name": "com.apex.downloadmanager",
+  "description": "APEX Download Manager \u2014 Native Messaging Host",
+  "path": "/usr/local/bin/apex-native-host",
+  "type": "stdio",
+  "allowed_extensions": [
+    "apex-browser-extension@apexdownloadmanager.app"
+  ]
+}

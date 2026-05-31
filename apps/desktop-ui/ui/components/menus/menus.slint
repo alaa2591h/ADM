@@ -1,0 +1,128 @@
+
+import { Palette, Typography, Spacing } from "../../theme/globals.slint";
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  SIDEBAR NAV ITEM
+// ─────────────────────────────────────────────────────────────────────────────
+export component SidebarItem inherits Rectangle {
+    in property <string> icon;
+    in property <string> label;
+    in property <int>    count;
+    in property <bool>   active;
+    in property <color>  accent:      Palette.acc;
+    in property <bool>   show-count:  true;
+    callback clicked;
+
+    height: 38px;
+    border-radius: Spacing.radius-sm;
+    background: active ? Palette.b3 : ta.has-hover ? Palette.b2 : transparent;
+    animate background { duration: 100ms; }
+
+    // Active indicator bar
+    if active: Rectangle {
+        x: 0; y: 8px;
+        width: 3px;
+        height: parent.height - 16px;
+        border-radius: 2px;
+        background: accent;
+    }
+
+    HorizontalLayout {
+        padding-left: 18px;
+        padding-right: 12px;
+        spacing: 10px;
+        alignment: center;
+
+        Text {
+            text: icon;
+            font-size: 14px;
+            width: 18px;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+        Text {
+            text: label;
+            horizontal-stretch: 1;
+            color: active ? Palette.t1 : ta.has-hover ? Palette.t1 : Palette.t2;
+            font-size: Typography.base;
+            font-weight: active ? Typography.semi : Typography.regular;
+            vertical-alignment: center;
+            animate color { duration: 100ms; }
+        }
+        if (show-count && count > 0): Rectangle {
+            height: 18px;
+            width: Math.max(badge-lbl.preferred-width + 10px, 22px);
+            border-radius: 9px;
+            background: active ? accent.with-alpha(0.18) : Palette.b4;
+
+            badge-lbl := Text {
+                text: count;
+                color: active ? accent : Palette.t3;
+                font-size: Typography.xs;
+                font-weight: Typography.bold;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+                animate color { duration: 100ms; }
+            }
+        }
+    }
+
+    ta := TouchArea {
+        clicked => { root.clicked(); }
+        mouse-cursor: pointer;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  CONTEXT MENU ITEM
+// ─────────────────────────────────────────────────────────────────────────────
+export component ContextMenuItem inherits Rectangle {
+    in property <string> icon;
+    in property <string> label;
+    in property <color>  fg:       Palette.t1;
+    in property <bool>   enabled:  true;
+    callback clicked;
+
+    height: 30px;
+    border-radius: Spacing.radius-sm;
+    background: (cta.has-hover && enabled) ? Palette.b3 : transparent;
+    animate background { duration: 60ms; }
+    opacity: enabled ? 1.0 : 0.38;
+
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: Spacing.sm;
+        alignment: center;
+
+        Text {
+            text: icon;
+            font-size: 12px;
+            width: 16px;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+            color: fg;
+        }
+        Text {
+            text: label;
+            horizontal-stretch: 1;
+            color: fg;
+            font-size: Typography.md;
+            vertical-alignment: center;
+        }
+    }
+
+    cta := TouchArea {
+        enabled: enabled;
+        clicked => { root.clicked(); }
+        mouse-cursor: enabled ? pointer : default;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  CONTEXT MENU SEPARATOR
+// ─────────────────────────────────────────────────────────────────────────────
+export component ContextMenuSep inherits Rectangle {
+    height: 1px;
+    background: Palette.bdr;
+}

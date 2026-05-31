@@ -1,0 +1,182 @@
+import { Palette, Typography, Spacing } from "../../theme/globals.slint";
+import { DlState } from "../../models/download-item.slint";
+
+export component ProgressBar inherits Rectangle {
+    in property <float> progress;
+    in property <color> fill-color: Palette.cyn;
+
+    height: 4px;
+    border-radius: 2px;
+    background: Palette.b4;
+    clip: true;
+
+    Rectangle {
+        x: 0; y: 0;
+        height: parent.height;
+        width: parent.width * max(0.0, min(100.0, progress)) / 100.0;
+        border-radius: 2px;
+        background: fill-color;
+        animate width { duration: 500ms; easing: ease-out; }
+    }
+}
+
+export component StatusPill inherits Rectangle {
+    in property <DlState> state;
+    in property <string>  sched-time;
+    in property <bool>    pulse-tick;
+
+    property <color> fg:
+        state == DlState.Running   ? Palette.cyn   :
+        state == DlState.Completed ? Palette.grn   :
+        state == DlState.Paused    ? Palette.pur   :
+        state == DlState.Queued    ? Palette.amb   :
+        state == DlState.Failed    ? Palette.red   :
+        state == DlState.Deleted  ? Palette.t3    :
+                                     Palette.sched;
+
+    property <string> lbl:
+        state == DlState.Running   ? "Downloading" :
+        state == DlState.Completed ? "Complete"    :
+        state == DlState.Paused    ? "Paused"      :
+        state == DlState.Queued    ? "Queued"      :
+        state == DlState.Failed    ? "Failed"      :
+        state == DlState.Deleted  ? "Deleted"     :
+                                     "Scheduled";
+
+    height: 18px;
+    width: 80px;
+    border-radius: 2px;
+    border-color: fg.with-alpha(0.2);
+    border-width: 1px;
+    background: fg.with-alpha(0.08);
+
+    HorizontalLayout {
+        padding-left: 5px;
+        padding-right: 5px;
+        spacing: 3px;
+        alignment: center;
+
+        Rectangle {
+            width: 5px;
+            height: 5px;
+            border-radius: 3px;
+            background: fg;
+            opacity: (state == DlState.Running) ? (pulse-tick ? 1.0 : 0.15) : 1.0;
+            animate opacity { duration: 600ms; easing: ease-in-out; }
+        }
+
+        Text {
+            text: lbl;
+            color: fg;
+            font-size: 9px;
+            font-weight: 700;
+            vertical-alignment: center;
+        }
+    }
+}
+
+export component ChunkStrip inherits HorizontalLayout {
+    in property <int>     chunks;
+    in property <float>   pct;
+    in property <DlState> state;
+
+    spacing: 1px;
+    alignment: end;
+
+    for i in min(chunks, 16): Rectangle {
+        property <float> seg-start: (i * 1.0)       / min(chunks, 16) * 100.0;
+        property <float> seg-end:   ((i + 1) * 1.0) / min(chunks, 16) * 100.0;
+        property <bool>  done:   pct >= seg-end;
+        property <bool>  active: !done && (state == DlState.Running) && pct >= seg-start;
+
+        width: 3px;
+        height: 7px;
+        border-radius: 1px;
+        background: done   ? Palette.grn :
+                    active ? Palette.cyn :
+                             Palette.b4;
+        animate background { duration: 250ms; }
+    }
+}
+
+export component ChunkGrid inherits Rectangle {
+    in property <int>     chunk-count;
+    in property <float>   pct;
+    in property <DlState> state;
+    in property <bool>    pulse-tick;
+
+    property <int> display-count: min(chunk-count, 64);
+    property <int> cols: display-count <= 32 ? 16 : 32;
+
+    background: transparent;
+    // Height: ceil(display-count / cols) rows × (15px cell + 3px gap) + 4px padding
+    height: Math.ceil(display-count * 1.0 / cols) * (15px + 3px) + 4px;
+
+    VerticalLayout {
+        spacing: 3px;
+        alignment: start;
+
+        HorizontalLayout {
+            spacing: 3px;
+            alignment: start;
+            for i in min(display-count, cols): Rectangle {
+                property <float> seg-start: (i * 1.0)       / display-count * 100.0;
+                property <float> seg-end:   ((i + 1) * 1.0) / display-count * 100.0;
+                property <bool>  done:   pct >= seg-end;
+                property <bool>  active: !done && (state == DlState.Running) && pct >= seg-start;
+
+                width: 15px; height: 15px;
+                border-radius: 3px;
+                border-color: done   ? Palette.grn.with-alpha(0.5)
+                            : active ? Palette.cyn.with-alpha(0.5)
+                            :          Palette.bdr;
+                border-width: 1px;
+                background: done   ? Palette.grn.with-alpha(0.8)
+                          : active ? Palette.cyn.with-alpha(0.55)
+                          :          Palette.b4;
+                animate background { duration: 350ms; }
+
+                if active: Rectangle {
+                    x: 3px; y: 3px;
+                    width: 9px; height: 9px;
+                    border-radius: 2px;
+                    background: Palette.cyn;
+                    opacity: pulse-tick ? 0.9 : 0.2;
+                    animate opacity { duration: 600ms; easing: ease-in-out; }
+                }
+            }
+        }
+
+        if (display-count > cols): HorizontalLayout {
+            spacing: 3px;
+            alignment: start;
+            for j in (display-count - cols): Rectangle {
+                property <int>   i: j + cols;
+                property <float> seg-start: (i * 1.0)       / display-count * 100.0;
+                property <float> seg-end:   ((i + 1) * 1.0) / display-count * 100.0;
+                property <bool>  done:   pct >= seg-end;
+                property <bool>  active: !done && (state == DlState.Running) && pct >= seg-start;
+
+                width: 15px; height: 15px;
+                border-radius: 3px;
+                border-color: done   ? Palette.grn.with-alpha(0.5)
+                            : active ? Palette.cyn.with-alpha(0.5)
+                            :          Palette.bdr;
+                border-width: 1px;
+                background: done   ? Palette.grn.with-alpha(0.8)
+                          : active ? Palette.cyn.with-alpha(0.55)
+                          :          Palette.b4;
+                animate background { duration: 350ms; }
+
+                if active: Rectangle {
+                    x: 3px; y: 3px;
+                    width: 9px; height: 9px;
+                    border-radius: 2px;
+                    background: Palette.cyn;
+                    opacity: pulse-tick ? 0.9 : 0.2;
+                    animate opacity { duration: 600ms; easing: ease-in-out; }
+                }
+            }
+        }
+    }
+}

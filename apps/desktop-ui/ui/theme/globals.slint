@@ -1,0 +1,16 @@
+
+export { Palette }    from "colors.slint";
+export { Typography } from "typography.slint";
+export { Spacing }    from "spacing.slint";
+export { i18n }       from "i18n.slint";
+
+// Shared pulse tick for animated status indicators
+export global PulseClock {
+    in-out property <bool> tick: false;
+}
+
+// Layout direction (LTR for English, RTL for Arabic/Hebrew/etc.)
+export global LayoutDirection {
+    in-out property <bool> is-rtl: false;
+}
+

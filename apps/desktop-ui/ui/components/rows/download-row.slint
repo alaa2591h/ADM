@@ -1,0 +1,227 @@
+import { Palette, Typography, Spacing } from "../../theme/globals.slint";
+import { DlState, DownloadItem }        from "../../models/download-item.slint";
+import { StatusPill, ProgressBar, ChunkStrip } from "../progress/progress.slint";
+
+component RowBtn inherits Rectangle {
+    in property <string> icon;
+    in property <color>  icon-color: Palette.t2;
+    callback clicked;
+
+    property <bool> hv: false;
+
+    width: 18px;
+    height: 18px;
+    border-radius: 2px;
+    background: hv ? Palette.b3 : Palette.b4;
+    animate background { duration: 70ms; }
+
+    Text {
+        text: icon;
+        color: icon-color;
+        font-size: 10px;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+    TouchArea {
+        z: 10;
+        clicked => { root.clicked(); }
+        mouse-cursor: pointer;
+    }
+}
+
+export component DownloadRow inherits Rectangle {
+    in property <DownloadItem> item;
+    in property <bool>         selected;
+    in property <bool>         pulse-tick;
+
+    callback row-clicked(string, bool, bool);
+    callback pause-clicked;
+    callback resume-clicked;
+    callback retry-clicked;
+    callback delete-clicked;
+    callback chunks-clicked;
+    callback open-folder-clicked;
+    callback context-menu-requested(string, length, length);
+
+    property <color> prog-color:
+        item.state == DlState.Running   ? Palette.cyn   :
+        item.state == DlState.Completed ? Palette.grn   :
+        item.state == DlState.Paused    ? Palette.pur   :
+        item.state == DlState.Failed    ? Palette.red   :
+        item.state == DlState.Scheduled ? Palette.sched :
+        item.state == DlState.Deleted  ? Palette.t3    :
+                                          Palette.b4;
+
+    height: Spacing.row-height;
+    background: selected ? Palette.acc.with-alpha(0.11)
+              : row-ta.has-hover ? Palette.b2
+              :                    Palette.b0;
+    clip: true;
+    animate background { duration: 80ms; }
+
+    if selected: Rectangle {
+        x: 0; y: 0;
+        width: 2px;
+        height: parent.height;
+        background: Palette.acc;
+    }
+
+    Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: Palette.bdr.with-alpha(0.4);
+    }
+
+    row-ta := TouchArea {
+        z: 0;
+        mouse-cursor: pointer;
+        pointer-event(e) => {
+            if (e.button == PointerEventButton.left && e.kind == PointerEventKind.up) {
+                row-clicked(item.id, e.modifiers.shift, e.modifiers.control);
+            }
+            if (e.button == PointerEventButton.right && e.kind == PointerEventKind.up) {
+                context-menu-requested(
+                    item.id,
+                    self.absolute-position.x + self.mouse-x,
+                    self.absolute-position.y + self.mouse-y
+                );
+            }
+        }
+    }
+
+    HorizontalLayout {
+        z: 1;
+        padding-left: 8px;
+        padding-right: 8px;
+        alignment: center;
+        spacing: 0;
+
+        Text {
+            width: 22px;
+            text: item.icon;
+            font-size: 12px;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+
+        // Filename + inline error badge
+        HorizontalLayout {
+            horizontal-stretch: 1;
+            spacing: 6px;
+            alignment: center;
+
+            Text {
+                horizontal-stretch: 1;
+                text: item.filename;
+                color: item.state == DlState.Failed ? Palette.red : Palette.t1;
+                font-size: 11px;
+                overflow: elide;
+                vertical-alignment: center;
+            }
+
+            if item.state == DlState.Failed && item.error != "": Rectangle {
+                width: err-lbl.preferred-width + 8px;
+                height: 16px;
+                border-radius: 3px;
+                background: Palette.red.with-alpha(0.15);
+                border-color: Palette.red.with-alpha(0.35);
+                border-width: 1px;
+                err-lbl := Text {
+                    text: item.error;
+                    color: Palette.red;
+                    font-size: 8px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+        }
+
+        HorizontalLayout {
+            width: 72px;
+            alignment: center;
+            StatusPill {
+                state: item.state;
+                sched-time: item.sched-time;
+                pulse-tick: pulse-tick;
+            }
+        }
+
+        HorizontalLayout {
+            width: 180px;
+            spacing: 5px;
+            alignment: center;
+            ProgressBar {
+                horizontal-stretch: 1;
+                height: 4px;
+                progress: item.pct;
+                fill-color: prog-color;
+            }
+            Text {
+                width: 34px;
+                text: item.pct > 0 ? item.pct-text : "—";
+                color: Palette.t2;
+                font-size: 9px;
+                horizontal-alignment: right;
+                vertical-alignment: center;
+            }
+        }
+
+        Text {
+            width: 110px;
+            text: item.size-text;
+            color: Palette.t2;
+            font-size: 9px;
+            horizontal-alignment: right;
+            vertical-alignment: center;
+        }
+
+        Text {
+            width: 72px;
+            text: item.speed-text;
+            color: item.bps > 0 ? Palette.cyn : Palette.t3;
+            font-size: 9px;
+            font-weight: item.bps > 0 ? Typography.medium : Typography.regular;
+            horizontal-alignment: right;
+            vertical-alignment: center;
+        }
+
+        Text {
+            width: 52px;
+            text: item.eta-text;
+            color: Palette.t2;
+            font-size: 9px;
+            horizontal-alignment: right;
+            vertical-alignment: center;
+        }
+
+        HorizontalLayout {
+            width: 64px;
+            alignment: end;
+            ChunkStrip {
+                chunks: item.chunks;
+                pct:    item.pct;
+                state:  item.state;
+            }
+        }
+    }
+
+    if row-ta.has-hover || selected: HorizontalLayout {
+        z: 2;
+        x: parent.width - self.width - 6px;
+        y: (parent.height - 18px) / 2;
+        height: 18px;
+        spacing: 2px;
+
+        if (item.state == DlState.Running):
+            RowBtn { icon: "⏸"; icon-color: Palette.cyn; clicked => { pause-clicked(); } }
+
+        if (item.state == DlState.Paused || item.state == DlState.Scheduled):
+            RowBtn { icon: "▶"; icon-color: Palette.grn; clicked => { resume-clicked(); } }
+
+        if (item.state == DlState.Failed):
+            RowBtn { icon: "↺"; icon-color: Palette.amb; clicked => { retry-clicked(); } }
+
+        RowBtn { icon: "≡"; icon-color: Palette.t2; clicked => { chunks-clicked(); } }
+        RowBtn { icon: "🗑"; icon-color: Palette.red; clicked => { delete-clicked(); } }
+    }
+}

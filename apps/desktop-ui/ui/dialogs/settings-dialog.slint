@@ -1,0 +1,1230 @@
+import { Palette, Typography, Spacing }              from "../theme/globals.slint";
+import { PrimaryButton, GhostButton }                from "../components/buttons/buttons.slint";
+import { LineEdit, ComboBox, Slider }                from "std-widgets.slint";
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  TOGGLE SWITCH
+// ─────────────────────────────────────────────────────────────────────────────
+component Toggle inherits Rectangle {
+    in-out property <bool> checked: false;
+    callback toggled(bool);
+
+    width: 40px;
+    height: 22px;
+    border-radius: 11px;
+    background: checked ? Palette.acc : Palette.b4;
+    border-width: 1px;
+    border-color: checked ? Palette.acc : Palette.bdr2;
+    animate background { duration: 150ms; }
+
+    thumb := Rectangle {
+        width: 14px; height: 14px;
+        border-radius: 7px;
+        background: white;
+        x: checked ? parent.width - self.width - 3px : 3px;
+        y: 3px;
+        drop-shadow-blur: 2px;
+        drop-shadow-color: #00000044;
+        animate x { duration: 150ms; easing: ease-in-out; }
+    }
+
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            checked = !checked;
+            toggled(checked);
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  STEPPER
+// ─────────────────────────────────────────────────────────────────────────────
+component Stepper inherits Rectangle {
+    in property  <int> min-val: 0;
+    in property  <int> max-val: 999;
+    in-out property <int> value: 0;
+
+    height: 30px;
+    border-radius: Spacing.radius-md;
+    background: Palette.b3;
+    border-width: 1px;
+    border-color: Palette.bdr2;
+
+    HorizontalLayout {
+        minus-btn := Rectangle {
+            width: 28px;
+            background: minus-ta.has-hover ? Palette.b4 : transparent;
+            border-radius: Spacing.radius-md;
+            animate background { duration: 80ms; }
+            Text { text: "−"; color: Palette.t2; horizontal-alignment: center; vertical-alignment: center; }
+            minus-ta := TouchArea {
+                mouse-cursor: pointer;
+                clicked => { if (root.value > root.min-val) { root.value -= 1; } }
+            }
+        }
+        Rectangle {
+            width: 1px; background: Palette.bdr2;
+        }
+        Text {
+            width: 50px;
+            text: root.value;
+            color: Palette.t1;
+            font-size: Typography.md;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+        Rectangle {
+            width: 1px; background: Palette.bdr2;
+        }
+        plus-btn := Rectangle {
+            width: 28px;
+            background: plus-ta.has-hover ? Palette.b4 : transparent;
+            border-radius: Spacing.radius-md;
+            animate background { duration: 80ms; }
+            Text { text: "+"; color: Palette.t2; horizontal-alignment: center; vertical-alignment: center; }
+            plus-ta := TouchArea {
+                mouse-cursor: pointer;
+                clicked => { if (root.value < root.max-val) { root.value += 1; } }
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  RADIO CHIP  — single selectable pill
+// ─────────────────────────────────────────────────────────────────────────────
+component RadioChip inherits Rectangle {
+    in property <string>  label;
+    in-out property <bool> active: false;
+    callback picked;
+
+    height: 28px;
+    border-radius: Spacing.radius-md;
+    background: active ? Palette.acc.with-alpha(0.16) : Palette.b3;
+    border-width: 1px;
+    border-color: active ? Palette.acc : Palette.bdr2;
+    animate background { duration: 100ms; }
+    animate border-color { duration: 100ms; }
+
+    HorizontalLayout {
+        padding-left: 14px; padding-right: 14px;
+        Text {
+            text: label;
+            color: active ? #5a93f5 : chip-ta.has-hover ? Palette.t1 : Palette.t2;
+            font-size: Typography.sm;
+            font-weight: active ? Typography.semi : Typography.regular;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+            animate color { duration: 100ms; }
+        }
+    }
+    chip-ta := TouchArea {
+        mouse-cursor: pointer;
+        clicked => { picked(); }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  SETTING ROW — icon + label/desc + control
+// ─────────────────────────────────────────────────────────────────────────────
+component SettingRow inherits Rectangle {
+    in property <string> icon:  "";
+    in property <string> label: "";
+    in property <string> desc:  "";
+    in-out property <bool> last: false;
+
+    height: desc != "" ? 60px : 48px;
+    background: row-ta.has-hover ? Palette.b3 : transparent;
+    border-color: last ? transparent : Palette.bdr;
+    border-width: 0px;
+    animate background { duration: 80ms; }
+
+    // bottom separator
+    if (!last): Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: Palette.bdr;
+    }
+
+    HorizontalLayout {
+        padding-left: 18px; padding-right: 18px;
+        padding-top: 12px; padding-bottom: 12px;
+        spacing: 12px;
+        alignment: center;
+
+        if (icon != ""): Rectangle {
+            width: 34px; height: 34px;
+            border-radius: Spacing.radius-md;
+            background: Palette.b3;
+            border-width: 1px;
+            border-color: Palette.bdr2;
+            Text {
+                text: icon;
+                font-size: 15px;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+        }
+
+        VerticalLayout {
+            alignment: center;
+            spacing: 2px;
+            horizontal-stretch: 1;
+            Text {
+                text: label;
+                color: Palette.t1;
+                font-size: Typography.md;
+                font-weight: Typography.medium;
+                overflow: elide;
+            }
+            if (desc != ""): Text {
+                text: desc;
+                color: Palette.t3;
+                font-size: Typography.xs;
+                wrap: word-wrap;
+            }
+        }
+
+        @children
+    }
+
+    row-ta := TouchArea { }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  SECTION HEADER  — uppercase label + rule
+// ─────────────────────────────────────────────────────────────────────────────
+component SectionHeader inherits HorizontalLayout {
+    in property <string> title;
+    spacing: 10px;
+    alignment: center;
+    padding-bottom: 2px;
+
+    Text {
+        text: title;
+        color: Palette.t3;
+        font-size: Typography.xs;
+        font-weight: Typography.bold;
+    }
+    Rectangle { height: 1px; background: Palette.bdr; vertical-stretch: 0; }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  CARD  — group wrapper
+// ─────────────────────────────────────────────────────────────────────────────
+component Card inherits Rectangle {
+    background: Palette.b2;
+    border-radius: Spacing.radius-xl;
+    border-width: 1px;
+    border-color: Palette.bdr;
+    clip: true;
+    @children
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  TAB ITEM
+// ─────────────────────────────────────────────────────────────────────────────
+component TabItem inherits Rectangle {
+    in property <string>  icon;
+    in property <string>  label;
+    in-out property <bool> active: false;
+    callback clicked;
+
+    height: 36px;
+    border-radius: Spacing.radius-md;
+    background: active ? Palette.b2 : tab-ta.has-hover ? Palette.b2.with-alpha(0.5) : transparent;
+    border-width: active ? 1px : 0px;
+    border-color: Palette.bdr;
+    animate background { duration: 100ms; }
+
+    // Active accent bar at bottom
+    if active: Rectangle {
+        y: parent.height - 2px;
+        height: 2px;
+        background: Palette.acc;
+        border-radius: 2px;
+    }
+
+    HorizontalLayout {
+        padding-left: 14px; padding-right: 14px;
+        spacing: 6px;
+        alignment: center;
+        Text {
+            text: icon;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+        Text {
+            text: label;
+            color: active ? Palette.t1 : tab-ta.has-hover ? Palette.t2 : Palette.t3;
+            font-size: Typography.sm;
+            font-weight: active ? Typography.medium : Typography.regular;
+            vertical-alignment: center;
+            animate color { duration: 100ms; }
+        }
+    }
+
+    tab-ta := TouchArea {
+        mouse-cursor: pointer;
+        clicked => { root.clicked(); }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  SHORTCUT ROW
+// ─────────────────────────────────────────────────────────────────────────────
+component ShortcutRow inherits Rectangle {
+    in property <string> label;
+    in property <string> key1;
+    in property <string> key2: "";
+    in-out property <bool> last: false;
+
+    height: 36px;
+    background: transparent;
+    if (!last): Rectangle {
+        y: parent.height - 1px; height: 1px; background: Palette.bdr;
+    }
+
+    HorizontalLayout {
+        padding-left: 18px; padding-right: 18px;
+        spacing: 12px; alignment: center;
+        Text {
+            text: label;
+            color: Palette.t2;
+            font-size: Typography.sm;
+            horizontal-stretch: 1;
+            vertical-alignment: center;
+        }
+        HorizontalLayout {
+            spacing: 4px; alignment: center;
+            Rectangle {
+                height: 22px;
+                border-radius: Spacing.radius-sm;
+                background: Palette.b3;
+                border-width: 1px; border-color: Palette.bdr2;
+                drop-shadow-offset-y: 2px; drop-shadow-color: Palette.b5;
+                HorizontalLayout {
+                    padding-left: 7px; padding-right: 7px;
+                    Text { text: key1; color: Palette.t1; font-size: Typography.xs; font-weight: Typography.semi; vertical-alignment: center; }
+                }
+            }
+            if (key2 != ""): Text {
+                text: "+"; color: Palette.t3; font-size: Typography.xs; vertical-alignment: center;
+            }
+            if (key2 != ""): Rectangle {
+                height: 22px;
+                border-radius: Spacing.radius-sm;
+                background: Palette.b3;
+                border-width: 1px; border-color: Palette.bdr2;
+                drop-shadow-offset-y: 2px; drop-shadow-color: Palette.b5;
+                HorizontalLayout {
+                    padding-left: 7px; padding-right: 7px;
+                    Text { text: key2; color: Palette.t1; font-size: Typography.xs; font-weight: Typography.semi; vertical-alignment: center; }
+                }
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  SETTINGS DIALOG  — floating modal, top-tab navigation
+// ─────────────────────────────────────────────────────────────────────────────
+export component SettingsDialog inherits Rectangle {
+    callback close;
+    // Full settings payload — every field from every tab is passed here
+    callback saved(
+        // General
+        string /* path */,
+        bool   /* launch-on-startup */,   bool /* start-minimized */,
+        bool   /* auto-update */,         bool /* send-telemetry */,
+        bool   /* ask-download-path */,   bool /* create-subfolder */,
+        bool   /* open-folder-on-done */, int  /* on-complete-action */,
+        // Downloads
+        int    /* max-simultaneous */,    string /* max-conns */,
+        bool   /* retry-failed */,        int  /* retry-count */,
+        int    /* retry-delay */,
+        bool   /* skip-duplicates */,     int  /* duplicate-action */,
+        bool   /* verify-integrity */,    bool /* auto-extract */,
+        // Connection
+        bool   /* use-proxy */,           int  /* proxy-type */,
+        bool   /* proxy-auth */,          int  /* bind-interface */,
+        int    /* timeout-secs */,
+        bool   /* force-ipv4 */,          bool /* server-rate-limit */,
+        bool   /* remember-creds */,      int  /* user-agent */,
+        // Speed
+        bool   /* global-dl-limit */,     bool /* global-ul-limit */,
+        int    /* speed-profile */,       int  /* slow-speed-kbps */,
+        // Scheduler
+        bool   /* scheduler-enabled */,   int  /* sched-speed-mode */,
+        // Browser
+        bool   /* capture-chrome */,      bool /* capture-firefox */,
+        bool   /* capture-edge */,        bool /* capture-brave */,
+        bool   /* capture-opera */,       bool /* capture-all */,
+        bool   /* capture-confirm */,     bool /* capture-video */,
+        int    /* min-capture-mb */,
+        // Notifications
+        bool   /* notif-done */,          bool /* notif-fail */,
+        bool   /* notif-pause */,         bool /* notif-disk */,
+        bool   /* notif-new */,           bool /* sound-done */,
+        int    /* sound-type */,          bool /* do-not-disturb */,
+        // Appearance
+        int    /* theme-mode */,          int  /* font-size */,
+        bool   /* taskbar-progress */,    bool /* speed-graph */,
+        bool   /* compact-rows */,        bool /* show-chunks */,
+        bool   /* animations */,
+        // Security
+        bool   /* app-lock */,            bool /* biometric */,
+        int    /* lock-timeout-mins */,   bool /* av-scan */,
+        bool   /* block-malware */,       bool /* warn-exe */,
+        bool   /* https-only */,          bool /* verify-ssl */,
+        int    /* history-retention */,   bool /* clear-on-exit */,
+        // Advanced
+        string /* workers */,             int  /* chunk-size-kb */,
+        int    /* buffer-mb */,           int  /* disk-write-strategy */,
+        bool   /* rest-api */,            string /* daemon-host */,
+        string /* daemon-port */,         int  /* log-level */,
+        int    /* max-log-mb */,
+        // Language
+        int    /* language */,            int  /* date-fmt */,
+        int    /* num-fmt */
+    );
+    callback browse-folder;
+    callback reset-defaults;
+    callback open-translation-tool;
+    callback browse-language-pack;
+    callback open-logs-folder;
+
+    width: 100%; height: 100%;
+    background: Palette.overlay;
+    
+
+    TouchArea { z: 0; clicked => { close(); } }
+
+    // ── State ──────────────────────────────────────────────────────────────
+    property <int>   active-tab: 0;
+
+    // General toggles
+    property <bool>  tog-startup:     true;
+    property <bool>  tog-startmin:    false;
+    property <bool>  tog-autoupdate:  true;
+    property <bool>  tog-telemetry:   false;
+    property <bool>  tog-askpath:     true;
+    property <bool>  tog-subfolder:   true;
+    property <bool>  tog-openfolder:  false;
+
+    // Downloads toggles
+    property <bool>  tog-retry:       true;
+    property <bool>  tog-skip-dup:    true;
+    property <bool>  tog-verify:      true;
+    property <bool>  tog-autoextract: false;
+    property <int>   val-max-dl:      5;
+    property <int>   val-conns:       8;
+    property <int>   val-retry-count: 3;
+    property <int>   val-retry-delay: 5;
+
+    // Connection
+    property <bool>  tog-use-proxy:   false;
+    property <bool>  tog-proxy-auth:  false;
+    property <bool>  tog-force-ipv4:  false;
+    property <bool>  tog-server-rl:   true;
+    property <bool>  tog-remcreds:    true;
+    property <int>   val-timeout:     30;
+
+    // Speed
+    property <bool>  tog-glob-dl:     false;
+    property <bool>  tog-glob-ul:     false;
+    property <int>   val-slow-speed:  256;
+    property <int>   speed-profile:   0;
+
+    // Scheduler
+    property <bool>  tog-sched:       true;
+    property <int>   sched-speed-mode: 0;
+
+    // Browser
+    property <bool>  tog-chrome:      true;
+    property <bool>  tog-firefox:     true;
+    property <bool>  tog-edge:        false;
+    property <bool>  tog-brave:       false;
+    property <bool>  tog-opera:       false;
+    property <bool>  tog-capture-all: true;
+    property <bool>  tog-dlg-confirm: true;
+    property <bool>  tog-capture-vid: true;
+    property <int>   val-min-capture: 1;
+
+    // Notifications
+    property <bool>  tog-notif-done:  true;
+    property <bool>  tog-notif-fail:  true;
+    property <bool>  tog-notif-pause: false;
+    property <bool>  tog-notif-disk:  true;
+    property <bool>  tog-notif-new:   true;
+    property <bool>  tog-sound-done:  true;
+    property <bool>  tog-dnd:         false;
+
+    // Appearance
+    property <int>   theme-mode:   0;
+    property <int>   font-size:    1;
+    property <bool>  tog-taskbar:  true;
+    property <bool>  tog-graph:    true;
+    property <bool>  tog-compact:  false;
+    property <bool>  tog-chunks:   true;
+    property <bool>  tog-anim:     true;
+
+    // Security
+    property <bool>  tog-app-lock: false;
+    property <bool>  tog-biometric:false;
+    property <int>   val-lock-to:  15;
+    property <bool>  tog-av-scan:  true;
+    property <bool>  tog-malware:  true;
+    property <bool>  tog-warn-exe: true;
+    property <bool>  tog-https:    false;
+    property <bool>  tog-ssl:      true;
+    property <bool>  tog-clear-exit:false;
+
+    // Advanced — daemon host / port (LineEdit)
+    property <string> val-daemon-host:  "127.0.0.1";
+    property <string> val-daemon-port:  "7878";
+
+    // Advanced — performance
+    property <int>   val-disk-write:    0;   // 0=sequential,1=pre-alloc,2=sparse
+    property <int>   val-log-level:     1;   // 0=off..5=verbose
+
+    // Connection
+    property <int>   val-proxy-type:    2;   // 0=HTTP,1=HTTPS,2=SOCKS5,3=SOCKS4
+    property <int>   val-bind-iface:    0;   // 0=auto,1=ethernet,2=wifi
+    property <int>   val-user-agent:    0;   // 0=ADM,1=Chrome,2=Firefox,3=Custom
+
+    // Notifications — sound
+    property <int>   val-sound-type:    0;   // 0=chime,1=bell,2=pop,3=custom
+
+    // General — on-complete action
+    property <int>   val-on-complete:   1;   // 0=nothing..4=sleep
+
+    // Downloads — duplicate action
+    property <int>   val-dup-action:    0;   // 0=rename,1=overwrite,2=ask,3=skip
+
+    // Security — history retention
+    property <int>   val-history-ret:   1;   // 0=forever,1=90d,2=30d,3=7d,4=never
+
+    // Language
+    property <int>   val-language:      0;
+    property <int>   val-date-fmt:      1;
+    property <int>   val-num-fmt:       0;
+    property <int>   val-chunk-kb:  512;
+    property <int>   val-buffer:    16;
+    property <int>   val-workers:   8;
+    property <string> val-download-path: "C:\\Users\\User\\Downloads";
+    property <bool>  tog-rest-api:  false;
+    property <int>   val-log-size:  50;
+
+    // ── Floating panel ────────────────────────────────────────────────────
+    panel := Rectangle {
+        z: 1;
+        width: min(parent.width - 48px, 860px);
+        height: min(parent.height - 48px, 620px);
+        x: (parent.width  - self.width)  / 2;
+        y: (parent.height - self.height) / 2;
+        background: Palette.b1;
+        border-radius: Spacing.radius-xl;
+        border-width: 1px;
+        border-color: Palette.bdr2;
+        drop-shadow-offset-y: 24px;
+        drop-shadow-blur: 70px;
+        drop-shadow-color: #00000099;
+        clip: true;
+
+        TouchArea { z: 10; } // stop backdrop click propagating
+
+        VerticalLayout {
+            spacing: 0;
+
+            // ── HEADER ───────────────────────────────────────────────────
+            Rectangle {
+                height: 50px;
+                background: Palette.b0;
+                Rectangle { y: parent.height - 1px; height: 1px; background: Palette.bdr; }
+
+                HorizontalLayout {
+                    padding-left: 20px; padding-right: 16px;
+                    spacing: 10px; alignment: center;
+
+                    // App icon
+                    Rectangle {
+                        width: 26px; height: 26px;
+                        border-radius: Spacing.radius-md;
+                        background: @linear-gradient(135deg, Palette.acc, Palette.acc-dim);
+                        drop-shadow-blur: 14px;
+                        drop-shadow-color: Palette.acc.with-alpha(0.25);
+                        Text { text: "A"; color: white; font-size: 13px; font-weight: Typography.bold; horizontal-alignment: center; vertical-alignment: center; }
+                    }
+
+                    Text {
+                        text: "ADM";
+                        color: Palette.t1;
+                        font-size: Typography.lg;
+                        font-weight: Typography.semi;
+                    }
+                    Text {
+                        text: "— Settings";
+                        color: Palette.t3;
+                        font-size: Typography.md;
+                    }
+
+                    Rectangle { horizontal-stretch: 1; }
+
+                    // Version badge
+                    Rectangle {
+                        height: 20px;
+                        border-radius: 10px; background: Palette.b3; border-width: 1px; border-color: Palette.bdr2;
+                        HorizontalLayout {
+                            padding-left: 8px; padding-right: 8px;
+                            Text { text: "v4.2.1"; color: Palette.t3; font-size: 9px; vertical-alignment: center; }
+                        }
+                    }
+
+                    Rectangle { width: 8px; }
+
+                    // Close button
+                    close-btn := Rectangle {
+                        width: 26px; height: 26px;
+                        border-radius: Spacing.radius-sm;
+                        background: close-ta.has-hover ? #ef444422 : transparent;
+                        animate background { duration: 80ms; }
+                        Text { text: "✕"; color: close-ta.has-hover ? Palette.red : Palette.t3; font-size: Typography.md; horizontal-alignment: center; vertical-alignment: center; }
+                        close-ta := TouchArea { mouse-cursor: pointer; clicked => { close(); } }
+                    }
+                }
+            }
+
+            // ── TOP TABS BAR ─────────────────────────────────────────────
+            Rectangle {
+                height: 42px;
+                background: Palette.b0;
+                Rectangle { y: parent.height - 1px; height: 1px; background: Palette.bdr; }
+
+                HorizontalLayout {
+                    padding-left: 16px; padding-right: 16px;
+                    spacing: 2px;
+                    alignment: start;
+
+                    TabItem { icon: "⚙";  label: "General";      active: active-tab == 0;  clicked => { active-tab = 0; } }
+                    TabItem { icon: "⬇";  label: "Downloads";    active: active-tab == 1;  clicked => { active-tab = 1; } }
+                    TabItem { icon: "🌐"; label: "Connection";   active: active-tab == 2;  clicked => { active-tab = 2; } }
+                    TabItem { icon: "⚡";  label: "Speed";        active: active-tab == 3;  clicked => { active-tab = 3; } }
+                    TabItem { icon: "🗓"; label: "Scheduler";    active: active-tab == 4;  clicked => { active-tab = 4; } }
+                    TabItem { icon: "🔗"; label: "Browser";      active: active-tab == 5;  clicked => { active-tab = 5; } }
+                    TabItem { icon: "🔔"; label: "Notifs";       active: active-tab == 6;  clicked => { active-tab = 6; } }
+                    TabItem { icon: "⌨";  label: "Shortcuts";    active: active-tab == 7;  clicked => { active-tab = 7; } }
+                    TabItem { icon: "🎨"; label: "Appearance";   active: active-tab == 8;  clicked => { active-tab = 8; } }
+                    TabItem { icon: "🌍"; label: "Language";     active: active-tab == 9;  clicked => { active-tab = 9; } }
+                    TabItem { icon: "🔒"; label: "Security";     active: active-tab == 10; clicked => { active-tab = 10; } }
+                    TabItem { icon: "🔧"; label: "Advanced";     active: active-tab == 11; clicked => { active-tab = 11; } }
+                }
+            }
+
+            // ── TAB CONTENT ──────────────────────────────────────────────
+            scroll-area := Flickable {
+                vertical-stretch: 1;
+                viewport-height: content-vl.preferred-height;
+                interactive: true;
+
+                content-vl := VerticalLayout {
+                    padding: Spacing.xxl;
+                    spacing: Spacing.xl;
+                    alignment: start;
+
+                        if (active-tab == 0): VerticalLayout {
+                            spacing: Spacing.xl;
+
+                            SectionHeader { title: "APPLICATION"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow { icon: "🚀"; label: "Launch on Startup"; desc: "Start ADM automatically when Windows starts"; Toggle { checked <=> tog-startup; } }
+                                    SettingRow { icon: "📌"; label: "Start Minimized to Tray"; desc: "Launch hidden in the system tray"; Toggle { checked <=> tog-startmin; } }
+                                    SettingRow { icon: "🔄"; label: "Auto-check for Updates"; desc: "Notify when a new version is available"; Toggle { checked <=> tog-autoupdate; } }
+                                    SettingRow { icon: "📊"; label: "Send Anonymous Usage Data"; desc: "Help improve ADM with anonymous statistics"; last: true; Toggle { checked <=> tog-telemetry; } }
+                                }
+                            }
+
+                            SectionHeader { title: "DEFAULT PATHS"; }
+                            Card {
+                                VerticalLayout {
+                                    Rectangle {
+                                        height: 72px;
+                                        background: transparent;
+                                        Rectangle { y: parent.height - 1px; height: 1px; background: Palette.bdr; }
+                                        VerticalLayout {
+                                            padding: Spacing.xl;
+                                            spacing: 8px;
+                                            Text { text: "Default Download Folder"; color: Palette.t1; font-size: Typography.md; font-weight: Typography.medium; }
+                                            HorizontalLayout {
+                                                spacing: 6px;
+                                                LineEdit { placeholder-text: "~/Downloads"; text <=> val-download-path; height: 32px; horizontal-stretch: 1; }
+                                                Rectangle {
+                                                    width: 72px; height: 32px;
+                                                    border-radius: Spacing.radius-md;
+                                                    background: brw1-ta.has-hover ? Palette.b4 : Palette.b3;
+                                                    border-width: 1px; border-color: brw1-ta.has-hover ? Palette.bdr3 : Palette.bdr2;
+                                                    animate background { duration: 80ms; }
+                                                    Text { text: "Browse…"; color: Palette.t2; font-size: Typography.xs; horizontal-alignment: center; vertical-alignment: center; }
+                                                    brw1-ta := TouchArea { mouse-cursor: pointer; clicked => { browse-folder(); } }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    SettingRow { label: "Ask where to save each download"; Toggle { checked <=> tog-askpath; } }
+                                    SettingRow { label: "Create sub-folder by file type"; desc: "e.g., Videos/, Music/, Documents/"; last: true; Toggle { checked <=> tog-subfolder; } }
+                                }
+                            }
+
+                            SectionHeader { title: "ON COMPLETION"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow {
+                                        label: "Action when all downloads complete";
+                                        ComboBox {
+                                            width: 180px;
+                                            model: ["Do nothing", "Show notification", "Play sound", "Shutdown PC", "Sleep PC"];
+                                            current-index <=> val-on-complete;
+                                        }
+                                    }
+                                    SettingRow { label: "Open folder after download completes"; last: true; Toggle { checked <=> tog-openfolder; } }
+                                }
+                            }
+                        }
+
+                        // ═══ DOWNLOADS ══════════════════════════════════════
+                        if (active-tab == 1): VerticalLayout {
+                            spacing: Spacing.xl;
+
+                            SectionHeader { title: "DOWNLOAD BEHAVIOR"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow { label: "Max simultaneous downloads"; Stepper { value <=> val-max-dl; min-val: 1; max-val: 32; } }
+                                    SettingRow { label: "Connections per file"; desc: "More connections = faster download"; Stepper { value <=> val-conns; min-val: 1; max-val: 64; } }
+                                    SettingRow { label: "Retry failed downloads"; Toggle { checked <=> tog-retry; } }
+                                    SettingRow { label: "Retry attempts"; Stepper { value <=> val-retry-count; min-val: 0; max-val: 20; } }
+                                    SettingRow { label: "Retry delay (seconds)"; last: true; Stepper { value <=> val-retry-delay; min-val: 1; max-val: 120; } }
+                                }
+                            }
+
+                            SectionHeader { title: "FILE HANDLING"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow { label: "Skip duplicate files"; desc: "Skip if file with same name exists"; Toggle { checked <=> tog-skip-dup; } }
+                                    SettingRow {
+                                        label: "If duplicate file exists";
+                                        ComboBox {
+                                            width: 180px;
+                                            model: ["Rename (file_1.zip)", "Overwrite", "Ask me", "Skip"];
+                                            current-index <=> val-dup-action;
+                                        }
+                                    }
+                                    SettingRow { label: "Verify file integrity (MD5/SHA256)"; Toggle { checked <=> tog-verify; } }
+                                    SettingRow { label: "Auto-extract ZIP/RAR archives"; last: true; Toggle { checked <=> tog-autoextract; } }
+                                }
+                            }
+                        }
+
+                        // ═══ CONNECTION ══════════════════════════════════════
+                        if (active-tab == 2): VerticalLayout {
+                            spacing: Spacing.xl;
+
+                            SectionHeader { title: "PROXY SETTINGS"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow { label: "Use Proxy"; Toggle { checked <=> tog-use-proxy; } }
+                                    SettingRow {
+                                        label: "Proxy Type";
+                                        ComboBox { width: 140px; model: ["HTTP", "HTTPS", "SOCKS5", "SOCKS4"]; current-index <=> val-proxy-type; }
+                                    }
+                                    SettingRow { label: "Proxy requires authentication"; last: true; Toggle { checked <=> tog-proxy-auth; } }
+                                }
+                            }
+
+                            SectionHeader { title: "NETWORK"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow {
+                                        label: "Bind to network interface";
+                                        ComboBox { width: 200px; model: ["Auto (Default)", "Ethernet", "Wi-Fi"]; current-index <=> val-bind-iface; }
+                                    }
+                                    SettingRow { label: "Connection timeout (seconds)"; Stepper { value <=> val-timeout; min-val: 5; max-val: 300; } }
+                                    SettingRow { label: "Force IPv4"; Toggle { checked <=> tog-force-ipv4; } }
+                                    SettingRow { label: "Respect server's rate limiting"; last: true; Toggle { checked <=> tog-server-rl; } }
+                                }
+                            }
+
+                            SectionHeader { title: "AUTHENTICATION"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow { label: "Remember login credentials"; Toggle { checked <=> tog-remcreds; } }
+                                    SettingRow {
+                                        label: "User-Agent string"; last: true;
+                                        ComboBox { width: 180px; model: ["ADM/4.2 (Windows)", "Chrome 124", "Firefox 126", "Custom…"]; current-index <=> val-user-agent; }
+                                    }
+                                }
+                            }
+                        }
+
+                        // ═══ SPEED LIMITS ═══════════════════════════════════
+                        if (active-tab == 3): VerticalLayout {
+                            spacing: Spacing.xl;
+
+                            SectionHeader { title: "GLOBAL SPEED LIMITS"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow { label: "Enable global download limit"; Toggle { checked <=> tog-glob-dl; } }
+                                    SettingRow { label: "Enable global upload limit"; last: true; Toggle { checked <=> tog-glob-ul; } }
+                                }
+                            }
+
+                            SectionHeader { title: "SPEED PROFILES"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow {
+                                        label: "Active profile";
+                                        HorizontalLayout {
+                                            spacing: 6px;
+                                            RadioChip { label: "Full Speed";  active: speed-profile == 0; picked => { speed-profile = 0; } }
+                                            RadioChip { label: "Limited";     active: speed-profile == 1; picked => { speed-profile = 1; } }
+                                            RadioChip { label: "Scheduled";   active: speed-profile == 2; picked => { speed-profile = 2; } }
+                                        }
+                                    }
+                                    SettingRow { label: "Slow-speed limit (KB/s)"; desc: "Used during scheduled quiet hours"; last: true; Stepper { value <=> val-slow-speed; min-val: 0; max-val: 10240; } }
+                                }
+                            }
+                        }
+
+                        // ═══ SCHEDULER ══════════════════════════════════════
+                        if (active-tab == 4): VerticalLayout {
+                            spacing: Spacing.xl;
+
+                            SectionHeader { title: "SCHEDULE"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow { label: "Enable Scheduler"; desc: "Auto start/stop downloads on schedule"; last: true; Toggle { checked <=> tog-sched; } }
+                                }
+                            }
+
+                            SectionHeader { title: "SCHEDULE SPEED"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow {
+                                        label: "Speed during scheduled hours"; last: true;
+                                        HorizontalLayout {
+                                            spacing: 6px;
+                                            RadioChip { label: "Full";  active: sched-speed-mode == 0; picked => { sched-speed-mode = 0; } }
+                                            RadioChip { label: "Slow";  active: sched-speed-mode == 1; picked => { sched-speed-mode = 1; } }
+                                            RadioChip { label: "Pause"; active: sched-speed-mode == 2; picked => { sched-speed-mode = 2; } }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // ═══ BROWSER ════════════════════════════════════════
+                        if (active-tab == 5): VerticalLayout {
+                            spacing: Spacing.xl;
+
+                            SectionHeader { title: "BROWSER EXTENSIONS"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow { icon: "🟡"; label: "Google Chrome";  desc: "● Connected"; Toggle { checked <=> tog-chrome; } }
+                                    SettingRow { icon: "🟠"; label: "Mozilla Firefox"; desc: "● Connected"; Toggle { checked <=> tog-firefox; } }
+                                    SettingRow { icon: "🔵"; label: "Microsoft Edge";  desc: "Not installed"; Toggle { checked <=> tog-edge; } }
+                                    SettingRow { icon: "🟤"; label: "Brave Browser";   desc: "Not installed"; Toggle { checked <=> tog-brave; } }
+                                    SettingRow { icon: "🔴"; label: "Opera / Opera GX"; desc: "Not installed"; last: true; Toggle { checked <=> tog-opera; } }
+                                }
+                            }
+
+                            SectionHeader { title: "CAPTURE SETTINGS"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow { label: "Capture all downloads from browser"; Toggle { checked <=> tog-capture-all; } }
+                                    SettingRow { label: "Minimum file size to capture (MB)"; Stepper { value <=> val-min-capture; min-val: 0; max-val: 100; } }
+                                    SettingRow { label: "Show confirmation dialog"; Toggle { checked <=> tog-dlg-confirm; } }
+                                    SettingRow { label: "Capture video streams"; last: true; Toggle { checked <=> tog-capture-vid; } }
+                                }
+                            }
+                        }
+
+                        // ═══ NOTIFICATIONS ══════════════════════════════════
+                        if (active-tab == 6): VerticalLayout {
+                            spacing: Spacing.xl;
+
+                            SectionHeader { title: "NOTIFICATION TYPES"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow { icon: "✅"; label: "Download completed"; Toggle { checked <=> tog-notif-done; } }
+                                    SettingRow { icon: "❌"; label: "Download failed"; Toggle { checked <=> tog-notif-fail; } }
+                                    SettingRow { icon: "⏸"; label: "Download paused"; Toggle { checked <=> tog-notif-pause; } }
+                                    SettingRow { icon: "⚠️"; label: "Low disk space warning"; Toggle { checked <=> tog-notif-disk; } }
+                                    SettingRow { icon: "🔗"; label: "New download added from browser"; last: true; Toggle { checked <=> tog-notif-new; } }
+                                }
+                            }
+
+                            SectionHeader { title: "SOUND"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow { label: "Play sound on completion"; Toggle { checked <=> tog-sound-done; } }
+                                    SettingRow {
+                                        label: "Completion sound";
+                                        ComboBox { width: 160px; model: ["Default chime", "Bell", "Pop", "Custom…"]; current-index <=> val-sound-type; }
+                                    }
+                                    SettingRow { label: "Do Not Disturb hours"; last: true; Toggle { checked <=> tog-dnd; } }
+                                }
+                            }
+                        }
+
+                        // ═══ SHORTCUTS ══════════════════════════════════════
+                        if (active-tab == 7): VerticalLayout {
+                            spacing: Spacing.xl;
+
+                            SectionHeader { title: "KEYBOARD SHORTCUTS"; }
+                            Card {
+                                VerticalLayout {
+                                    padding: Spacing.sm;
+                                    ShortcutRow { label: "Add new download";     key1: "Ctrl"; key2: "N"; }
+                                    ShortcutRow { label: "Pause selected";        key1: "Ctrl"; key2: "P"; }
+                                    ShortcutRow { label: "Resume selected";       key1: "Ctrl"; key2: "R"; }
+                                    ShortcutRow { label: "Delete selected";       key1: "Del"; }
+                                    ShortcutRow { label: "Pause all";             key1: "Ctrl+Shift"; key2: "P"; }
+                                    ShortcutRow { label: "Resume all";            key1: "Ctrl+Shift"; key2: "R"; }
+                                    ShortcutRow { label: "Open settings";         key1: "Ctrl"; key2: ","; }
+                                    ShortcutRow { label: "Search";                key1: "Ctrl"; key2: "F"; }
+                                    ShortcutRow { label: "Copy URL";              key1: "Ctrl"; key2: "C"; }
+                                    ShortcutRow { label: "Open download folder";  key1: "Ctrl"; key2: "E"; last: true; }
+                                }
+                            }
+
+                            SectionHeader { title: "OPTIONS"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow { label: "Enable global hotkeys"; desc: "Works even when ADM is in background"; last: true; Toggle { checked: true; } }
+                                }
+                            }
+                        }
+
+                        // ═══ APPEARANCE ═════════════════════════════════════
+                        if (active-tab == 8): VerticalLayout {
+                            spacing: Spacing.xl;
+
+                            SectionHeader { title: "THEME"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow {
+                                        label: "Theme mode";
+                                        HorizontalLayout {
+                                            spacing: 6px;
+                                            RadioChip { label: "🌙 Dark";  active: theme-mode == 0; picked => { theme-mode = 0; } }
+                                            RadioChip { label: "☀️ Light"; active: theme-mode == 1; picked => { theme-mode = 1; } }
+                                            RadioChip { label: "🖥 Auto";  active: theme-mode == 2; picked => { theme-mode = 2; } }
+                                        }
+                                    }
+                                    SettingRow { label: "Use system accent color"; last: true; Toggle { checked: false; } }
+                                }
+                            }
+
+                            SectionHeader { title: "LAYOUT & UI"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow {
+                                        label: "Font size";
+                                        HorizontalLayout {
+                                            spacing: 6px;
+                                            RadioChip { label: "Small";  active: font-size == 0; picked => { font-size = 0; } }
+                                            RadioChip { label: "Medium"; active: font-size == 1; picked => { font-size = 1; } }
+                                            RadioChip { label: "Large";  active: font-size == 2; picked => { font-size = 2; } }
+                                        }
+                                    }
+                                    SettingRow { label: "Show progress in taskbar"; Toggle { checked <=> tog-taskbar; } }
+                                    SettingRow { label: "Show speed graph in row"; Toggle { checked <=> tog-graph; } }
+                                    SettingRow { label: "Compact download rows"; Toggle { checked <=> tog-compact; } }
+                                    SettingRow { label: "Show chunk panel"; Toggle { checked <=> tog-chunks; } }
+                                    SettingRow { label: "Animations & transitions"; last: true; Toggle { checked <=> tog-anim; } }
+                                }
+                            }
+                        }
+
+                        // ═══ LANGUAGE ═══════════════════════════════════════
+                        if (active-tab == 9): VerticalLayout {
+                            spacing: Spacing.xl;
+
+                            SectionHeader { title: "DISPLAY LANGUAGE"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow {
+                                        label: "Application language";
+                                        ComboBox {
+                                            width: 220px;
+                                            model: ["Auto-detect (System)", "English", "العربية (Arabic)", "Français", "Deutsch", "Español", "中文", "日本語", "Русский"];
+                                            current-index <=> val-language;
+                                        }
+                                    }
+                                    SettingRow {
+                                        label: "Date format";
+                                        ComboBox { width: 160px; model: ["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD"]; current-index <=> val-date-fmt; }
+                                    }
+                                    SettingRow {
+                                        label: "Number format"; last: true;
+                                        ComboBox { width: 200px; model: ["1,234.56 (Western)", "١٬٢٣٤٫٥٦ (Arabic)", "1.234,56 (European)"]; current-index <=> val-num-fmt; }
+                                    }
+                                }
+                            }
+
+                            SectionHeader { title: "TRANSLATION"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow {
+                                        label: "Help translate ADM"; desc: "Contribute missing translations";
+                                        Rectangle {
+                                            width: 140px; height: 30px;
+                                            border-radius: Spacing.radius-md;
+                                            background: tl1-ta.has-hover ? Palette.b4 : Palette.b3;
+                                            border-width: 1px; border-color: tl1-ta.has-hover ? Palette.bdr3 : Palette.bdr2;
+                                            Text { text: "Open Translation Tool"; color: Palette.t2; font-size: 10px; horizontal-alignment: center; vertical-alignment: center; }
+                                            tl1-ta := TouchArea { mouse-cursor: pointer; clicked => { open-translation-tool(); } }
+                                        }
+                                    }
+                                    SettingRow {
+                                        label: "Load custom language pack (.adml)"; last: true;
+                                        Rectangle {
+                                            width: 80px; height: 30px;
+                                            border-radius: Spacing.radius-md;
+                                            background: tl2-ta.has-hover ? Palette.b4 : Palette.b3;
+                                            border-width: 1px; border-color: tl2-ta.has-hover ? Palette.bdr3 : Palette.bdr2;
+                                            Text { text: "Browse…"; color: Palette.t2; font-size: Typography.xs; horizontal-alignment: center; vertical-alignment: center; }
+                                            tl2-ta := TouchArea { mouse-cursor: pointer; clicked => { browse-language-pack(); } }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // ═══ SECURITY ════════════════════════════════════════
+                        if (active-tab == 10): VerticalLayout {
+                            spacing: Spacing.xl;
+
+                            SectionHeader { title: "APP LOCK"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow { label: "Require password on launch"; Toggle { checked <=> tog-app-lock; } }
+                                    SettingRow { label: "Use Windows Hello / Biometric"; Toggle { checked <=> tog-biometric; } }
+                                    SettingRow { label: "Lock after inactivity (minutes)"; last: true; Stepper { value <=> val-lock-to; min-val: 1; max-val: 60; } }
+                                }
+                            }
+
+                            SectionHeader { title: "DOWNLOAD SAFETY"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow { label: "Scan with Windows Defender on complete"; Toggle { checked <=> tog-av-scan; } }
+                                    SettingRow { label: "Block known malware URLs"; Toggle { checked <=> tog-malware; } }
+                                    SettingRow { label: "Warn before running .exe downloads"; Toggle { checked <=> tog-warn-exe; } }
+                                    SettingRow { label: "Enforce HTTPS-only downloads"; Toggle { checked <=> tog-https; } }
+                                    SettingRow { label: "Verify SSL certificates"; last: true; Toggle { checked <=> tog-ssl; } }
+                                }
+                            }
+
+                            SectionHeader { title: "PRIVACY"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow {
+                                        label: "Keep download history for";
+                                        ComboBox { width: 140px; model: ["Forever", "90 days", "30 days", "7 days", "Never"]; current-index <=> val-history-ret; }
+                                    }
+                                    SettingRow { label: "Clear history on exit"; last: true; Toggle { checked <=> tog-clear-exit; } }
+                                }
+                            }
+                        }
+
+                        // ═══ ADVANCED ════════════════════════════════════════
+                        if (active-tab == 11): VerticalLayout {
+                            spacing: Spacing.xl;
+
+                            SectionHeader { title: "PERFORMANCE"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow { label: "Worker threads"; desc: "Parallel processing threads (0 = auto)"; Stepper { value <=> val-workers; min-val: 0; max-val: 64; } }
+                                    SettingRow { label: "Chunk size (KB)"; desc: "Size of each downloaded segment"; Stepper { value <=> val-chunk-kb; min-val: 64; max-val: 8192; } }
+                                    SettingRow { label: "Buffer size (MB)"; Stepper { value <=> val-buffer; min-val: 1; max-val: 256; } }
+                                    SettingRow {
+                                        label: "Disk write strategy"; last: true;
+                                        ComboBox { width: 160px; model: ["Sequential", "Pre-allocate", "Sparse"]; current-index <=> val-disk-write; }
+                                    }
+                                }
+                            }
+
+                            SectionHeader { title: "DAEMON / API"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow {
+                                        label: "Daemon host";
+                                        LineEdit { text <=> val-daemon-host; height: 30px; width: 160px; }
+                                    }
+                                    SettingRow { label: "Enable REST API"; Toggle { checked <=> tog-rest-api; } }
+                                    SettingRow {
+                                        label: "Daemon port"; last: true;
+                                        LineEdit { text <=> val-daemon-port; height: 30px; width: 90px; }
+                                    }
+                                }
+                            }
+
+                            SectionHeader { title: "LOGS & DIAGNOSTICS"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow {
+                                        label: "Log level";
+                                        ComboBox { width: 140px; model: ["Off", "Error", "Warning", "Info", "Debug", "Verbose"]; current-index <=> val-log-level; }
+                                    }
+                                    SettingRow { label: "Max log file size (MB)"; Stepper { value <=> val-log-size; min-val: 5; max-val: 500; } }
+                                    SettingRow {
+                                        label: "Open logs folder"; last: true;
+                                        Rectangle {
+                                            width: 100px; height: 30px;
+                                            border-radius: Spacing.radius-md;
+                                            background: log-ta.has-hover ? Palette.b4 : Palette.b3;
+                                            border-width: 1px; border-color: log-ta.has-hover ? Palette.bdr3 : Palette.bdr2;
+                                            Text { text: "Open Folder"; color: Palette.t2; font-size: Typography.xs; horizontal-alignment: center; vertical-alignment: center; }
+                                            log-ta := TouchArea { mouse-cursor: pointer; clicked => { open-logs-folder(); } }
+                                        }
+                                    }
+                                }
+                            }
+
+                            SectionHeader { title: "RESET"; }
+                            Card {
+                                VerticalLayout {
+                                    SettingRow {
+                                        label: "Reset all settings to defaults";
+                                        desc: "This cannot be undone"; last: true;
+                                        Rectangle {
+                                            width: 90px; height: 30px;
+                                            border-radius: Spacing.radius-md;
+                                            background: rst-ta.has-hover ? Palette.red.with-alpha(0.15) : transparent;
+                                            border-width: 1px; border-color: Palette.red.with-alpha(0.6);
+                                            Text { text: "Reset All"; color: Palette.red; font-size: Typography.xs; horizontal-alignment: center; vertical-alignment: center; }
+                                            rst-ta := TouchArea { mouse-cursor: pointer; clicked => { reset-defaults(); } }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+            // ── FOOTER ───────────────────────────────────────────────────
+            Rectangle {
+                height: 52px;
+                background: Palette.b0;
+                Rectangle { height: 1px; background: Palette.bdr; }
+
+                HorizontalLayout {
+                    padding-left: Spacing.xxl;
+                    padding-right: Spacing.xxl;
+                    spacing: Spacing.sm;
+                    alignment: start;
+
+                    // Reset
+                    reset-btn := Rectangle {
+                        height: 32px; width: 120px;
+                        border-radius: Spacing.radius-md;
+                        background: reset-ta.has-hover ? Palette.b2 : transparent;
+                        border-width: 0px;
+                        animate background { duration: 80ms; }
+                        Text { text: "↺  Reset Defaults"; color: reset-ta.has-hover ? Palette.t2 : Palette.t3; font-size: Typography.sm; horizontal-alignment: center; vertical-alignment: center; }
+                        reset-ta := TouchArea { mouse-cursor: pointer; clicked => { reset-defaults(); } }
+                    }
+
+                    Rectangle { horizontal-stretch: 1; }
+
+                    // Status indicator
+                    HorizontalLayout {
+                        spacing: 6px; alignment: center;
+                        Rectangle {
+                            width: 6px; height: 6px;
+                            border-radius: 3px;
+                            background: Palette.grn;
+                            drop-shadow-blur: 6px;
+                            drop-shadow-color: Palette.grn;
+                        }
+                        Text { text: "All changes saved"; color: Palette.t3; font-size: Typography.xs; vertical-alignment: center; }
+                    }
+
+                    Rectangle { width: Spacing.lg; }
+
+                    // Cancel
+                    cancel-btn := Rectangle {
+                        height: 32px; width: 80px;
+                        border-radius: Spacing.radius-md;
+                        background: cancel-ta.has-hover ? Palette.b3 : Palette.b2;
+                        border-width: 1px; border-color: Palette.bdr2;
+                        animate background { duration: 80ms; }
+                        Text { text: "Cancel"; color: cancel-ta.has-hover ? Palette.t1 : Palette.t2; font-size: Typography.sm; horizontal-alignment: center; vertical-alignment: center; }
+                        cancel-ta := TouchArea { mouse-cursor: pointer; clicked => { close(); } }
+                    }
+
+                    // Save
+                    PrimaryButton {
+                        width: 120px;
+                        label: "Save Changes";
+                        icon: "✓";
+                        bg: Palette.acc;
+                        clicked => {
+                            saved(
+                                // General
+                                val-download-path,
+                                tog-startup, tog-startmin, tog-autoupdate, tog-telemetry,
+                                tog-askpath, tog-subfolder, tog-openfolder,
+                                val-on-complete,
+                                // Downloads
+                                val-max-dl, "" + val-conns,
+                                tog-retry, val-retry-count, val-retry-delay,
+                                tog-skip-dup, val-dup-action,
+                                tog-verify, tog-autoextract,
+                                // Connection
+                                tog-use-proxy, val-proxy-type,
+                                tog-proxy-auth, val-bind-iface,
+                                val-timeout,
+                                tog-force-ipv4, tog-server-rl, tog-remcreds,
+                                val-user-agent,
+                                // Speed
+                                tog-glob-dl, tog-glob-ul,
+                                speed-profile, val-slow-speed,
+                                // Scheduler
+                                tog-sched, sched-speed-mode,
+                                // Browser
+                                tog-chrome, tog-firefox, tog-edge, tog-brave, tog-opera,
+                                tog-capture-all, tog-dlg-confirm, tog-capture-vid,
+                                val-min-capture,
+                                // Notifications
+                                tog-notif-done, tog-notif-fail, tog-notif-pause,
+                                tog-notif-disk, tog-notif-new,
+                                tog-sound-done, val-sound-type,
+                                tog-dnd,
+                                // Appearance
+                                theme-mode, font-size,
+                                tog-taskbar, tog-graph,
+                                tog-compact, tog-chunks, tog-anim,
+                                // Security
+                                tog-app-lock, tog-biometric, val-lock-to,
+                                tog-av-scan, tog-malware, tog-warn-exe,
+                                tog-https, tog-ssl,
+                                val-history-ret,
+                                tog-clear-exit,
+                                // Advanced
+                                "" + val-workers, val-chunk-kb, val-buffer,
+                                val-disk-write,
+                                tog-rest-api, val-daemon-host, val-daemon-port,
+                                val-log-level, val-log-size,
+                                // Language
+                                val-language, val-date-fmt, val-num-fmt
+                            );
+                            close();
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

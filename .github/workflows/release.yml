@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    name: Build Release (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: adm-linux
+            asset_name: adm-linux-x86_64
+          - os: windows-latest
+            artifact_name: adm-windows.exe
+            asset_name: adm-windows-x86_64.exe
+          - os: macos-latest
+            artifact_name: adm-macos
+            asset_name: adm-macos-x86_64
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build Binary
+        run: cargo build --release --workspace
+
+      - name: Rename Binaries (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        run: |
+          mv target/release/daemon target/release/${{ matrix.artifact_name }}
+        shell: bash
+
+      - name: Rename Binaries (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          mv target/release/daemon.exe target/release/${{ matrix.artifact_name }}
+        shell: bash
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.asset_name }}
+          path: target/release/${{ matrix.artifact_name }}
+
+  create-release:
+    name: Create GitHub Release
+    needs: build-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: artifacts/**/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

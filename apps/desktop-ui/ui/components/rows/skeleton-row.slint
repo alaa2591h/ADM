@@ -1,0 +1,88 @@
+import { Palette, Spacing } from "../../theme/globals.slint";
+
+export component SkeletonRow inherits Rectangle {
+    in property <bool> pulse-tick;
+
+    height: Spacing.row-height;
+    background: Palette.b0;
+    clip: true;
+
+    Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: Palette.bdr.with-alpha(0.4);
+    }
+
+    HorizontalLayout {
+        z: 1;
+        padding-left: 8px;
+        padding-right: 8px;
+        alignment: center;
+        spacing: 0;
+
+        Rectangle {
+            width: 22px; height: 14px; border-radius: 2px;
+            background: Palette.b3;
+            opacity: pulse-tick ? 0.5 : 0.25;
+            animate opacity { duration: 800ms; easing: ease-in-out; }
+        }
+
+        Rectangle {
+            horizontal-stretch: 1; height: 10px;
+            border-radius: 2px; background: Palette.b3;
+            opacity: pulse-tick ? 0.5 : 0.25;
+            animate opacity { duration: 800ms; easing: ease-in-out; }
+        }
+
+        Rectangle {
+            width: 72px; height: 16px;
+            border-radius: 2px; background: Palette.b3;
+            opacity: pulse-tick ? 0.4 : 0.2;
+            animate opacity { duration: 800ms; easing: ease-in-out; }
+        }
+
+        HorizontalLayout {
+            width: 180px; spacing: 5px; alignment: center;
+            Rectangle {
+                horizontal-stretch: 1; height: 4px;
+                border-radius: 2px; background: Palette.b3;
+                opacity: pulse-tick ? 0.4 : 0.2;
+                animate opacity { duration: 800ms; easing: ease-in-out; }
+            }
+            Rectangle {
+                width: 34px; height: 10px;
+                border-radius: 2px; background: Palette.b3;
+                opacity: pulse-tick ? 0.3 : 0.15;
+                animate opacity { duration: 800ms; easing: ease-in-out; }
+            }
+        }
+
+        Rectangle {
+            width: 110px; height: 10px;
+            border-radius: 2px; background: Palette.b3;
+            opacity: pulse-tick ? 0.3 : 0.15;
+            animate opacity { duration: 800ms; easing: ease-in-out; }
+        }
+
+        Rectangle {
+            width: 72px; height: 10px;
+            border-radius: 2px; background: Palette.b3;
+            opacity: pulse-tick ? 0.3 : 0.15;
+            animate opacity { duration: 800ms; easing: ease-in-out; }
+        }
+
+        Rectangle {
+            width: 52px; height: 10px;
+            border-radius: 2px; background: Palette.b3;
+            opacity: pulse-tick ? 0.3 : 0.15;
+            animate opacity { duration: 800ms; easing: ease-in-out; }
+        }
+
+        Rectangle {
+            width: 64px; height: 7px;
+            border-radius: 1px; background: Palette.b3;
+            opacity: pulse-tick ? 0.3 : 0.15;
+            animate opacity { duration: 800ms; easing: ease-in-out; }
+        }
+    }
+}

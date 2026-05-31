@@ -1,0 +1,53 @@
+[package]
+name = "adm-network"
+version.workspace = true
+license.workspace = true
+edition.workspace = true
+
+[dependencies]
+tokio       = { workspace = true }
+reqwest      = { workspace = true, features = ["json", "stream", "rustls-tls", "gzip", "brotli", "deflate"] }
+anyhow      = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+url         = { workspace = true }
+async-trait = { workspace = true }
+futures     = { workspace = true }
+futures-util = { workspace = true }
+bytes       = { workspace = true }
+parking_lot = { workspace = true }
+chrono      = { workspace = true }
+http        = "1"
+adm-types   = { path = "../adm-types" }
+adm-storage = { path = "../adm-storage" }
+tokio-util  = { workspace = true }
+
+# Features used by specific protocol clients
+h3           = { version = "0.0.8", optional = true }
+h3-quinn     = { version = "0.0.10", optional = true }
+quinn        = { version = "0.11", optional = true }
+rustls       = { version = "0.23", optional = true }
+rustls-020   = { package = "rustls", version = "0.20", optional = true }
+rustls-pki-types = { version = "1", optional = true }
+async_ftp    = { version = "6.0", features = ["secure"], optional = true }
+tokio-rustls = { version = "0.26", optional = true }
+tokio-rustls-023 = { package = "tokio-rustls", version = "0.23", optional = true }
+tokio-native-tls = { version = "0.3", optional = true }
+hmac         = { version = "0.13", optional = true }
+sha2         = { version = "0.11", optional = true }
+ssh2         = { version = "0.9", optional = true }
+hex          = { version = "0.4", optional = true }
+webpki-roots = { version = "1.0", optional = true }
+webpki-roots-022 = { package = "webpki-roots", version = "0.22", optional = true }
+librqbit     = { version = "8", optional = true }
+librqbit-core = { version = "5", optional = true }
+
+[features]
+default = ["http3", "torrent", "ftp", "s3", "sftp", "rtmp"]
+test-utils = []
+http3 = ["h3", "h3-quinn", "quinn", "rustls", "rustls-pki-types", "webpki-roots"]
+torrent = ["librqbit", "librqbit-core"]
+ftp = ["async_ftp", "tokio-rustls-023", "rustls-020", "webpki-roots-022"]
+s3 = ["hmac", "sha2", "hex"]
+sftp = ["ssh2"]
+rtmp = ["tokio-native-tls"]

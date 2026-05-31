@@ -1,0 +1,48 @@
+
+export enum DlState {
+    Running,
+    Completed,
+    Paused,
+    Queued,
+    Failed,
+    Scheduled,
+    Deleted,
+}
+
+export struct DownloadItem {
+    id:           string,
+    filename:     string,
+    url:          string,
+    icon:         string,
+    state:        DlState,
+    pct:          float,
+    pct-text:     string,
+    size-text:    string,
+    dl-text:      string,    // downloaded so far
+    speed-text:   string,
+    eta-text:     string,
+    bps:          float,
+    chunks:       int,
+    error:        string,
+    sched-time:   string,
+    category:     string,   // "video" | "audio" | "document" | "archive" | "other"
+    selected:     bool,
+}
+
+export struct FilterCounts {
+    all:       int,
+    running:   int,
+    completed: int,
+    queued:    int,
+    scheduled: int,
+    paused:    int,
+    failed:    int,
+    deleted:   int,
+}
+
+export struct AppStats {
+    total-downloaded: string,
+    active-speed:     string,
+    active-count:     int,
+    completed-today:  int,
+}

@@ -1,0 +1,56 @@
+
+import { Palette, Spacing }                              from "../theme/globals.slint";
+import { DialogPanel, DialogHeader, DialogField,
+         DialogFooter }                                  from "../components/dialogs/dialog-base.slint";
+
+export component SchedulerDialog inherits Rectangle {
+    callback close;
+    callback confirmed(string /* url */, string /* name */, string /* iso-time */);
+
+    width: 100%; height: 100%;
+    background: Palette.overlay;
+    
+
+    TouchArea { z: 0; clicked => { close(); } }
+
+    DialogPanel {
+        z: 1;
+        x: (parent.width  - self.width)  / 2;
+        y: (parent.height - self.height) / 2;
+        panel-width: 480px;
+        panel-height: 320px;
+
+        VerticalLayout {
+            spacing: 0;
+
+            DialogHeader {
+                title: "Schedule Download";
+                title-icon: "🗓";
+                close-clicked => { close(); }
+            }
+
+            VerticalLayout {
+                padding: Spacing.xl;
+                spacing: Spacing.md;
+                vertical-stretch: 1;
+
+                url-f  := DialogField { field-label: "URL";                    placeholder: "https://…";           }
+                name-f := DialogField { field-label: "Save as (optional)";     placeholder: "Auto-detect";         }
+                time-f := DialogField { field-label: "Start at (YYYY-MM-DD HH:MM)"; placeholder: "2025-10-15 02:00"; }
+            }
+
+            DialogFooter {
+                confirm-label: "Schedule";
+                confirm-width: 110px;
+                confirm-bg:    Palette.sched;
+                cancel-clicked  => { close(); }
+                confirm-clicked => {
+                    if (url-f.value != "") {
+                        confirmed(url-f.value, name-f.value, time-f.value);
+                        close();
+                    }
+                }
+            }
+        }
+    }
+}

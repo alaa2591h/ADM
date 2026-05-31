@@ -1,0 +1,139 @@
+
+import { Palette, Typography, Spacing } from "../../theme/globals.slint";
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  STAT CARD  — compact metric widget used in the sidebar footer / overview
+// ─────────────────────────────────────────────────────────────────────────────
+export component StatCard inherits Rectangle {
+    in property <string> icon;
+    in property <string> value;
+    in property <string> label;
+    in property <color>  accent: Palette.acc;
+
+    height: 56px;
+    border-radius: Spacing.radius-md;
+    background: Palette.b2;
+    border-color: Palette.bdr2;
+    border-width: 1px;
+
+    HorizontalLayout {
+        padding-left: Spacing.md;
+        padding-right: Spacing.md;
+        spacing: Spacing.sm;
+        alignment: center;
+
+        // Icon circle
+        Rectangle {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: accent.with-alpha(0.14);
+
+            Text {
+                text: icon;
+                font-size: 15px;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+        }
+
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 2px;
+
+            Text {
+                text: value;
+                color: Palette.t1;
+                font-size: Typography.lg;
+                font-weight: Typography.bold;
+            }
+            Text {
+                text: label;
+                color: Palette.t3;
+                font-size: Typography.xs;
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  BADGE / TAG  — small inline label
+// ─────────────────────────────────────────────────────────────────────────────
+export component Badge inherits Rectangle {
+    in property <string> text;
+    in property <color>  fg: Palette.t2;
+    in property <color>  bg: Palette.b4;
+
+    height: 17px;
+    width: lbl.preferred-width + 12px;
+    min-width: 22px;
+    border-radius: 8px;
+    background: bg;
+
+    lbl := Text {
+        text: text;
+        color: fg;
+        font-size: Typography.xs;
+        font-weight: Typography.bold;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  SECTION HEADER  — labelled divider inside lists
+// ─────────────────────────────────────────────────────────────────────────────
+export component SectionHeader inherits Rectangle {
+    in property <string> label;
+    height: 24px;
+
+    HorizontalLayout {
+        padding-left: Spacing.lg;
+        alignment: start;
+        Text {
+            text: label;
+            color: Palette.t3;
+            font-size: Typography.xs;
+            font-weight: Typography.bold;
+            vertical-alignment: center;
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  EMPTY STATE  — shown when the download list is empty
+// ─────────────────────────────────────────────────────────────────────────────
+export component EmptyState inherits VerticalLayout {
+    in property <string> icon:    "⬇";
+    in property <string> title:   "No downloads yet";
+    in property <string> subtitle: "Click  ＋ Add  in the toolbar to get started";
+    callback add-clicked;
+
+    alignment: center;
+    spacing: Spacing.md;
+    padding: Spacing.xxl;
+    opacity: 0;
+    animate opacity { duration: 200ms; easing: ease-in-out; }
+    init => { self.opacity = 1; }
+
+    Text {
+        text: icon;
+        font-size: 48px;
+        color: Palette.t3;
+        horizontal-alignment: center;
+    }
+    Text {
+        text: title;
+        color: Palette.t2;
+        font-size: Typography.xl;
+        font-weight: Typography.semi;
+        horizontal-alignment: center;
+    }
+    Text {
+        text: subtitle;
+        color: Palette.t3;
+        font-size: Typography.md;
+        horizontal-alignment: center;
+    }
+}

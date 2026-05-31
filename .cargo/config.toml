@@ -1,0 +1,16 @@
+# ── Build flags ───────────────────────────────────────────────────────────────
+[build]
+# Required by adm-network (reqwest http3 / QUIC feature)
+rustflags = ["--cfg", "reqwest_unstable"]
+
+# ── Windows x86-64 target ─────────────────────────────────────────────────────
+[target.x86_64-pc-windows-msvc]
+# lld-link is Microsoft's LLVM linker — significantly faster than link.exe
+# for large Rust workspaces.  Install via `rustup component add llvm-tools`
+# then set CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER=lld-link in CI.
+# linker = "lld-link"
+rustflags = [
+    "--cfg", "reqwest_unstable",
+    # Static CRT linkage — avoids a VC++ Redistributable runtime dep
+    "-C", "target-feature=+crt-static",
+]

@@ -1,0 +1,151 @@
+
+import { Palette, Typography, Spacing, PulseClock } from "../../theme/globals.slint";
+import { DlState }                                  from "../../models/download-item.slint";
+import { ChunkGrid }                                from "../progress/progress.slint";
+import { IconButton }                               from "../buttons/buttons.slint";
+
+export component ChunkPanel inherits Rectangle {
+    in property <string>  title;
+    in property <int>     chunk-count;
+    in property <float>   pct;
+    in property <DlState> state;
+    in property <string>  speed-text:  "";
+    in property <string>  eta-text:    "";
+    callback close;
+
+    background: Palette.b2;
+    border-radius: Spacing.radius-md;
+    border-color: Palette.bdr2;
+    border-width: 1px;
+    drop-shadow-offset-y: -6px;
+    drop-shadow-blur: 22px;
+    drop-shadow-color: #00000066;
+
+    VerticalLayout {
+        padding: Spacing.md;
+        spacing: Spacing.md;
+
+        // Header row
+        HorizontalLayout {
+            spacing: Spacing.sm;
+
+            Text {
+                horizontal-stretch: 1;
+                text: title;
+                color: Palette.t1;
+                font-size: Typography.md;
+                font-weight: Typography.bold;
+                vertical-alignment: center;
+            }
+
+            // Metadata badges
+            if (speed-text != ""): Rectangle {
+                height: 20px;
+                width: speed-lbl.preferred-width + 12px;
+                border-radius: Spacing.radius-sm;
+                background: Palette.cyn.with-alpha(0.1);
+
+                speed-lbl := Text {
+                    text: speed-text;
+                    color: Palette.cyn;
+                    font-size: Typography.xs;
+                    font-weight: Typography.semi;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+            if (eta-text != ""): Rectangle {
+                height: 20px;
+                width: eta-lbl.preferred-width + 12px;
+                border-radius: Spacing.radius-sm;
+                background: Palette.amb.with-alpha(0.1);
+
+                eta-lbl := Text {
+                    text: "ETA " + eta-text;
+                    color: Palette.amb;
+                    font-size: Typography.xs;
+                    font-weight: Typography.semi;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+
+            IconButton {
+                icon: "✕";
+                size: 24px;
+                icon-color: Palette.t3;
+                clicked => { close(); }
+            }
+        }
+
+        // Chunk count selector badge
+        HorizontalLayout {
+            spacing: Spacing.sm;
+            alignment: start;
+
+            Rectangle {
+                height: 20px;
+                width: cnt-lbl.preferred-width + 14px;
+                border-radius: Spacing.radius-sm;
+                background: Palette.b4;
+
+                cnt-lbl := Text {
+                    text: chunk-count + " chunks";
+                    color: Palette.t2;
+                    font-size: Typography.xs;
+                    font-weight: Typography.semi;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+            Rectangle {
+                height: 20px;
+                width: pct-lbl.preferred-width + 14px;
+                border-radius: Spacing.radius-sm;
+                background: Palette.grn.with-alpha(0.1);
+
+                pct-lbl := Text {
+                    text: Math.round(pct) + "% complete";
+                    color: Palette.grn;
+                    font-size: Typography.xs;
+                    font-weight: Typography.semi;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+        }
+
+        // Legend
+        HorizontalLayout {
+            spacing: Spacing.lg;
+            alignment: start;
+
+            for entry in [
+                { color: Palette.grn, label: "Complete" },
+                { color: Palette.cyn, label: "Active"   },
+                { color: Palette.b4,  label: "Pending"  },
+            ]: HorizontalLayout {
+                spacing: 5px; alignment: center;
+                Rectangle {
+                    width: 10px; height: 10px;
+                    border-radius: 2px;
+                    background: entry.color;
+                }
+                Text {
+                    text: entry.label;
+                    color: Palette.t3;
+                    font-size: Typography.xs;
+                    vertical-alignment: center;
+                }
+            }
+        }
+
+        // Dynamic chunk grid
+        ChunkGrid {
+            chunk-count: chunk-count;
+            pct:         pct;
+            state:       state;
+            pulse-tick:  PulseClock.tick;
+        }
+    }
+}

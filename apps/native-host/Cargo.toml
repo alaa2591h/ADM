@@ -1,0 +1,22 @@
+[package]
+name             = "adm-native-host"
+version.workspace = true
+license.workspace = true
+edition.workspace = true
+
+[dependencies]
+# runtime
+tokio              = { workspace = true }
+# WebSocket (connects outward to daemon WS gateway)
+tokio-tungstenite  = { workspace = true, features = ["native-tls"] }
+futures-util       = { workspace = true }
+# serialisation
+serde              = { workspace = true }
+serde_json         = { workspace = true }
+# IPC types
+ipc                = { workspace = true }
+# logging (stderr only — stdout is the NM wire)
+tracing            = { workspace = true }
+tracing-subscriber = { workspace = true}
+# error handling
+anyhow             = { workspace = true }

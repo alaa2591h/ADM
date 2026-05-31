@@ -1,0 +1,126 @@
+import { Palette, Typography, Spacing, i18n } from "../theme/globals.slint";
+
+component TbSep inherits Rectangle {
+    width: 1px;
+    height: 24px; // Slightly shorter for a cleaner look
+    background: Palette.bdr2;
+}
+
+component TbBtn inherits Rectangle {
+    in property <string> icon;
+    in property <string> label;
+    in property <color>  icon-color: Palette.t2;
+    in property <length> btn-width:  54px; // Balanced width
+    callback clicked;
+
+    property <bool> hv: false;
+    property <bool> pr: false;
+
+    width: btn-width;
+    height: Spacing.toolbar-height;
+    border-radius: 10px; // Softer corners
+    background: pr ? Palette.b4 : hv ? Palette.b3 : transparent;
+    animate background { duration: 150ms; }
+
+    VerticalLayout {
+        alignment: center;
+        spacing: 3px;
+        Text {
+            text: icon;
+            color: icon-color;
+            font-size: 16px;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+            animate color { duration: 150ms; }
+        }
+        Text {
+            text: label;
+            color: hv ? Palette.t1 : Palette.t2;
+            font-size: 9px;
+            font-weight: 700;
+            horizontal-alignment: center;
+            animate color { duration: 150ms; }
+        }
+    }
+
+    TouchArea {
+        pointer-event(e) => {
+            if (e.kind == PointerEventKind.down) { pr = true;  }
+            if (e.kind == PointerEventKind.up)   { pr = false; }
+        }
+        moved    => { hv = self.has-hover; }
+        clicked  => { root.clicked(); }
+        mouse-cursor: pointer;
+    }}
+
+export component Topbar inherits Rectangle {
+    callback add-clicked;
+    callback schedule-clicked;
+    callback pause-all-clicked;
+    callback resume-all-clicked;
+    callback delete-clicked;
+    callback delete-all-clicked;
+    callback move-queue-clicked;
+    callback settings-clicked;
+
+    height: Spacing.toolbar-height;
+    background: Palette.b2;
+    Rectangle { y: parent.height - 1px; height: 1px; background: Palette.bdr; }
+
+    HorizontalLayout {
+        padding-left: Spacing.md;
+        padding-right: Spacing.md;
+        spacing: 4px; // Add a bit of space between buttons
+        alignment: start;
+
+        TbBtn {
+            icon: "＋"; label: i18n.t("add-btn");
+            icon-color: Palette.grn; btn-width: i18n.is-rtl ? 64px : 50px;
+            clicked => { add-clicked(); }
+        }
+        TbBtn {
+            icon: "⏸"; label: i18n.t("pause-all");
+            icon-color: Palette.cyn; btn-width: i18n.is-rtl ? 70px : 64px;
+            clicked => { pause-all-clicked(); }
+        }
+        TbBtn {
+            icon: "▶"; label: i18n.t("resume-all");
+            icon-color: Palette.acc; btn-width: i18n.is-rtl ? 76px : 70px;
+            clicked => { resume-all-clicked(); }
+        }
+
+        TbSep {}
+
+        TbBtn {
+            icon: "🗑"; label: i18n.is-rtl ? "حذف" : "Delete";
+            icon-color: #f87171; btn-width: 50px;
+            clicked => { delete-clicked(); }
+        }
+        TbBtn {
+            icon: "✕"; label: i18n.is-rtl ? "حذف الكل" : "Delete All";
+            icon-color: #fb923c; btn-width: 64px;
+            clicked => { delete-all-clicked(); }
+        }
+
+        TbSep {}
+
+        TbBtn {
+            icon: "≡"; label: i18n.is-rtl ? "الطابور" : "Queue";
+            icon-color: #facc15; btn-width: 54px;
+            clicked => { move-queue-clicked(); }
+        }
+        TbBtn {
+            icon: "🗓"; label: i18n.t("schedule-btn");
+            icon-color: Palette.sched; btn-width: 64px;
+            clicked => { schedule-clicked(); }
+        }
+
+        Rectangle { horizontal-stretch: 1; }
+
+        TbBtn {
+            icon: "⚙"; label: i18n.t("settings");
+            icon-color: Palette.t2; btn-width: 64px;
+            clicked => { settings-clicked(); }
+        }
+    }
+}

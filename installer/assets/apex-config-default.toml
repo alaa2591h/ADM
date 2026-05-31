@@ -1,0 +1,62 @@
+# =============================================================================
+#  APEX Download Manager — Default Configuration
+#  Location: {app}\config\apex.toml  (Windows)
+#            ~/.config/apex/apex.toml  (Linux / macOS)
+# =============================================================================
+
+[daemon]
+# TCP port for the WebSocket JSON-RPC gateway (Desktop UI / Browser Extension)
+ws_port         = 9001
+
+# HTTP REST bridge (native messaging fallback)
+http_port       = 57423
+
+# Maximum simultaneous active downloads
+max_concurrent  = 5
+
+# Path where downloaded files are saved by default
+# Windows default: {userdocs}\Downloads
+# Leave empty to use OS default
+download_dir    = ""
+
+# Logging level: error | warn | info | debug | trace
+log_level       = "info"
+
+# Log file path (leave empty for stderr only)
+log_file        = ""
+
+[engine]
+# Initial chunk size for range requests (bytes)
+chunk_size_initial = 2097152        # 2 MiB
+
+# Adaptive chunking — min/max bounds
+chunk_size_min     = 524288         # 512 KiB
+chunk_size_max     = 33554432       # 32 MiB
+
+# Parallel chunks per download
+chunks_per_download = 8
+
+# Stall detection threshold (seconds without progress)
+stall_timeout_secs  = 30
+
+# Lease expiry for crash-recovery (seconds)
+lease_ttl_secs      = 60
+
+[network]
+# Global request timeout (seconds, 0 = no timeout)
+connect_timeout_secs = 15
+read_timeout_secs    = 60
+
+# Retry policy
+max_retries          = 5
+retry_backoff_ms     = 500          # Initial back-off; doubles on each retry
+
+# User-Agent string sent with every request
+user_agent = "ADM/0.1.0 (https://github.com/apex-dm/adm)"
+
+[storage]
+# SQLite database path (leave empty to use {app}\data\adm.db)
+db_path = ""
+
+# Auto-vacuum interval (minutes, 0 = disabled)
+vacuum_interval_min = 60

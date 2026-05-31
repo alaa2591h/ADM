@@ -1,0 +1,154 @@
+
+import { Palette, Typography, Spacing } from "../../theme/globals.slint";
+import { PrimaryButton, GhostButton }   from "../buttons/buttons.slint";
+import { LineEdit }                     from "std-widgets.slint";
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  DIALOG PANEL
+// ─────────────────────────────────────────────────────────────────────────────
+export component DialogPanel inherits Rectangle {
+    in property <length> panel-width:  460px;
+    in property <length> panel-height: 300px;
+
+    z: 1;
+    width: panel-width;
+    height: panel-height;
+    background: Palette.b2;
+    border-radius: Spacing.radius-lg;
+    border-color: Palette.bdr2;
+    border-width: 1px;
+    drop-shadow-offset-y: 14px;
+    drop-shadow-blur: 40px;
+    drop-shadow-color: #00000088;
+    animate drop-shadow-blur { duration: 250ms; }
+
+    @children
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  DIALOG HEADER  — title row with optional close button
+// ─────────────────────────────────────────────────────────────────────────────
+export component DialogHeader inherits Rectangle {
+    in property <string> title;
+    in property <string> title-icon: "";
+    callback close-clicked;
+
+    height: 52px;
+    border-radius: Spacing.radius-lg;   // top corners only (visual)
+    background: transparent;
+
+    // Bottom separator
+    Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: Palette.bdr;
+    }
+
+    HorizontalLayout {
+        padding-left: Spacing.xl;
+        padding-right: Spacing.lg;
+        spacing: Spacing.sm;
+        alignment: center;
+
+        if (title-icon != ""): Text {
+            text: title-icon;
+            font-size: 17px;
+            vertical-alignment: center;
+        }
+        Text {
+            text: title;
+            horizontal-stretch: 1;
+            color: Palette.t1;
+            font-size: Typography.lg;
+            font-weight: Typography.bold;
+            vertical-alignment: center;
+        }
+
+        // Close button
+        close-btn := Rectangle {
+            width: 26px;
+            height: 26px;
+            border-radius: Spacing.radius-sm;
+            background: close-ta.has-hover ? Palette.b3 : transparent;
+            animate background { duration: 80ms; }
+
+            Text {
+                text: "✕";
+                color: Palette.t3;
+                font-size: Typography.md;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+            close-ta := TouchArea {
+                mouse-cursor: pointer;
+                clicked => { close-clicked(); }
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  DIALOG FIELD  — labelled text input
+// ─────────────────────────────────────────────────────────────────────────────
+export component DialogField inherits VerticalLayout {
+    in property  <string>    field-label;
+    in property  <string>    placeholder;
+    in property  <InputType> input-type: InputType.text;
+    out property <string>    value <=> edit.text;
+
+    spacing: 5px;
+
+    Text {
+        text: field-label;
+        color: Palette.t2;
+        font-size: Typography.xs;
+        font-weight: Typography.semi;
+    }
+    edit := LineEdit {
+        height: 34px;
+        placeholder-text: placeholder;
+        input-type: input-type;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  DIALOG FOOTER  — action buttons row
+// ─────────────────────────────────────────────────────────────────────────────
+export component DialogFooter inherits Rectangle {
+    in property <string> cancel-label:  "Cancel";
+    in property <string> confirm-label: "OK";
+    in property <color>  confirm-bg:    Palette.acc;
+    in property <length> confirm-width: 100px;
+    callback cancel-clicked;
+    callback confirm-clicked;
+
+    height: 56px;
+    background: transparent;
+
+    // Top separator
+    Rectangle {
+        y: 0;
+        height: 1px;
+        background: Palette.bdr;
+    }
+
+    HorizontalLayout {
+        alignment: end;
+        padding-left: Spacing.xl;
+        padding-right: Spacing.xl;
+        padding-top: 0;
+        spacing: Spacing.sm;
+
+        GhostButton {
+            width: 88px;
+            label: cancel-label;
+            clicked => { cancel-clicked(); }
+        }
+        PrimaryButton {
+            width: confirm-width;
+            label: confirm-label;
+            bg: confirm-bg;
+            clicked => { confirm-clicked(); }
+        }
+    }
+}

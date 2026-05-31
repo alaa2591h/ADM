@@ -1,0 +1,20 @@
+[package]
+name = "adm-server"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "adm-server"
+path = "src/main.rs"
+
+[dependencies]
+anyhow      = { workspace = true }
+tokio       = { workspace = true }
+tracing     = { workspace = true }
+tracing-subscriber = { workspace = true }
+adm-engine  = { path = "../../crates/adm-engine" }
+adm-gateway = { path = "../../crates/adm-gateway" }
+adm-storage = { path = "../../crates/adm-storage" }
+adm-network = { path = "../../crates/adm-network" }
+axum        = { workspace = true }

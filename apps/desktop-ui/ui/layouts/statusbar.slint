@@ -1,0 +1,95 @@
+import { Palette, Typography, Spacing } from "../theme/globals.slint";
+
+component SbSep inherits Rectangle {
+    width: 1px;
+    height: 10px;
+    background: Palette.bdr2;
+}
+
+export component StatusBar inherits Rectangle {
+    in property <bool>   daemon-connected;
+    in property <string> worker-count: "8";
+    in property <string> max-conns:    "32";
+    in property <string> active-speed: "—";
+    in property <int>    active-count: 0;
+
+    height: Spacing.statusbar-height;
+    background: Palette.b1;
+    Rectangle { height: 1px; background: Palette.bdr; }
+
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 14px;
+        alignment: center;
+
+        HorizontalLayout {
+            spacing: 4px;
+            alignment: center;
+            Rectangle {
+                width: 6px; height: 6px; border-radius: 3px;
+                background: daemon-connected ? Palette.grn : Palette.red;
+            }
+            Text {
+                text: daemon-connected ? "Connected" : "Disconnected";
+                color: Palette.t2;
+                font-size: Typography.sm;
+                vertical-alignment: center;
+            }
+        }
+
+        SbSep {}
+
+        HorizontalLayout {
+            spacing: 4px; alignment: center;
+            Text { text: "↓"; color: Palette.t3; font-size: Typography.sm; vertical-alignment: center; }
+            Text {
+                text: active-speed;
+                color: active-count > 0 ? Palette.grn : Palette.t3;
+                font-size: Typography.sm;
+                font-weight: active-count > 0 ? Typography.bold : Typography.regular;
+                vertical-alignment: center;
+            }
+        }
+
+        SbSep {}
+
+        HorizontalLayout {
+            spacing: 4px; alignment: center;
+            Text { text: "Workers: "; color: Palette.t3; font-size: Typography.sm; vertical-alignment: center; }
+            Text { text: worker-count; color: Palette.t2; font-size: Typography.sm; vertical-alignment: center; }
+        }
+
+        SbSep {}
+
+        HorizontalLayout {
+            spacing: 4px; alignment: center;
+            Text { text: "Conns: "; color: Palette.t3; font-size: Typography.sm; vertical-alignment: center; }
+            Text { text: max-conns; color: Palette.cyn; font-size: Typography.sm; font-weight: Typography.bold; vertical-alignment: center; }
+        }
+
+        Rectangle { horizontal-stretch: 1; }
+
+        if (active-count > 0): Rectangle {
+            height: 16px;
+            border-radius: Spacing.radius-md;
+            background: Palette.b3;
+            HorizontalLayout {
+                padding-left: 8px;
+                padding-right: 8px;
+                spacing: 4px;
+                alignment: center;
+                Rectangle {
+                    width: 5px; height: 5px; border-radius: 3px;
+                    background: Palette.cyn;
+                }
+                Text {
+                    text: active-count + " active";
+                    color: Palette.t2;
+                    font-size: 9px;
+                    vertical-alignment: center;
+                }
+            }
+        }
+    }
+}

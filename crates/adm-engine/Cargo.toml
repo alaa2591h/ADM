@@ -1,0 +1,44 @@
+[package]
+name = "adm-engine"
+version.workspace = true
+license.workspace = true
+edition.workspace = true
+
+[dependencies]
+tokio       = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+anyhow      = { workspace = true }
+uuid        = { workspace = true }
+tracing     = { workspace = true }
+chrono      = { workspace = true }
+regex       = "1"
+csv         = "1"
+rand        = "0.9"
+hex         = "0.4"
+rustls      = "0.23"
+webpki-roots = "1.0"
+parking_lot = { workspace = true }
+reqwest     = { workspace = true, features = ["json", "stream", "rustls-tls"] }
+md5         = { workspace = true }
+sha1        = { workspace = true }
+sha2        = { workspace = true }
+crc32fast   = { workspace = true }
+aes-gcm     = { workspace = true }
+pbkdf2      = { workspace = true }
+aes         = { workspace = true }
+cipher      = { workspace = true }
+thiserror   = { workspace = true }
+async-trait = { workspace = true }
+x509-parser = "0.18"
+axum        = { workspace = true }
+ipc         = { workspace = true }
+url         = { workspace = true }
+adm-types   = { path = "../adm-types" }
+adm-storage = { path = "../adm-storage" }
+adm-network = { path = "../adm-network", features = ["test-utils"] }
+adm-observability = { path = "../observability" }
+
+[dev-dependencies]
+tempfile           = { workspace = true }
+tracing-subscriber = { workspace = true }

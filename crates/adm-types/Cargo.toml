@@ -1,0 +1,13 @@
+[package]
+name = "adm-types"
+version.workspace = true
+license.workspace = true
+edition.workspace = true
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+uuid = { workspace = true, features = ["v4", "serde"] }
+chrono = { workspace = true, features = ["serde"] }
+anyhow = { workspace = true }
+url = "2"
+

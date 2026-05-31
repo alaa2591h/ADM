@@ -1,0 +1,63 @@
+import { Palette } from "colors.slint";
+
+export global i18n {
+    in-out property <bool> is-rtl: false;
+
+    // --- English Strings ---
+    property <string> en-app-title:      "APEX Download Manager";
+    property <string> en-add-btn:        "Add New";
+    property <string> en-schedule-btn:   "Schedule";
+    property <string> en-pause-all:      "Pause All";
+    property <string> en-resume-all:     "Resume All";
+    property <string> en-settings:       "Settings";
+    property <string> en-all:           "All Downloads";
+    property <string> en-downloading:   "Downloading";
+    property <string> en-completed:     "Completed";
+    property <string> en-paused:        "Paused";
+    property <string> en-error:         "Errors";
+
+    // --- Arabic Strings ---
+    property <string> ar-app-title:      "مدير تحميلات APEX";
+    property <string> ar-add-btn:        "إضافة جديد";
+    property <string> ar-schedule-btn:   "جدولة";
+    property <string> ar-pause-all:      "إيقاف الكل";
+    property <string> ar-resume-all:     "استئناف الكل";
+    property <string> ar-settings:       "الإعدادات";
+    property <string> ar-all:           "جميع التحميلات";
+    property <string> ar-downloading:   "جاري التحميل";
+    property <string> ar-completed:     "المكتملة";
+    property <string> ar-paused:        "الموقوفة";
+    property <string> ar-error:         "الأخطاء";
+
+    // --- Helper function for quick translation ---
+    pure callback t(string) -> string;
+    t(key) => {
+        if (is-rtl) {
+            if (key == "app-title")    { return ar-app-title; }
+            if (key == "add-btn")      { return ar-add-btn; }
+            if (key == "schedule-btn") { return ar-schedule-btn; }
+            if (key == "pause-all")    { return ar-pause-all; }
+            if (key == "resume-all")   { return ar-resume-all; }
+            if (key == "settings")     { return ar-settings; }
+            if (key == "all")          { return ar-all; }
+            if (key == "downloading")  { return ar-downloading; }
+            if (key == "completed")    { return ar-completed; }
+            if (key == "paused")       { return ar-paused; }
+            if (key == "error")        { return ar-error; }
+        }
+        
+        if (key == "app-title")    { return en-app-title; }
+        if (key == "add-btn")      { return en-add-btn; }
+        if (key == "schedule-btn") { return en-schedule-btn; }
+        if (key == "pause-all")    { return en-pause-all; }
+        if (key == "resume-all")   { return en-resume-all; }
+        if (key == "settings")     { return en-settings; }
+        if (key == "all")          { return en-all; }
+        if (key == "downloading")  { return en-downloading; }
+        if (key == "completed")    { return en-completed; }
+        if (key == "paused")       { return en-paused; }
+        if (key == "error")        { return en-error; }
+        
+        return key;
+    }
+}

@@ -1,0 +1,13 @@
+node_modules
+dist
+build
+.next
+.cache
+coverage
+*.log
+*.png
+*.jpg
+*.jpeg
+*.mp4
+*.mov
+*.zip
